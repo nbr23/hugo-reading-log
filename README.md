@@ -1,0 +1,2 @@
+# hugo-reading-log
+
