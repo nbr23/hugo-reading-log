@@ -14,3 +14,5 @@ hugo.linux
 .hugo_build.lock
 exampleSite/public/
 exampleSite/static/authors_map.html
+exampleSite/data/authors_cache.json
+exampleSite/data/authors_cache.yaml
