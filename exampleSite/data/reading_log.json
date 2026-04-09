@@ -1,0 +1,27 @@
+{
+  "2026": [
+    {
+      "title": "Les Misérables",
+      "authors": ["Victor Hugo"]
+    },
+    {
+      "title": "Fahrenheit 451",
+      "authors": ["Ray Bradbury"],
+      "hidden": true
+    }
+  ],
+  "2025": [
+    {
+      "title": "L'Étranger",
+      "authors": ["Albert Camus"]
+    },
+    {
+      "title": "Madame Bovary",
+      "authors": ["Gustave Flaubert"]
+    },
+    {
+      "title": "Le Comte de Monte-Cristo",
+      "authors": ["Alexandre Dumas"]
+    }
+  ]
+}
