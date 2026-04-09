@@ -1,0 +1,67 @@
+{{ define "main" -}}
+<div class="container">
+  <div class="book-list">
+    <header id="title-block-header">
+      <h1 class="title">{{ site.Params.siteTitle | default site.Title }}</h1>
+    </header>
+{{- $data := hugo.Data.reading_log -}}
+{{- $years := slice -}}
+{{- $hasPreviously := false -}}
+{{- range $year, $books := $data -}}
+  {{- if eq $year "Previously…" -}}
+    {{- $hasPreviously = true -}}
+  {{- else -}}
+    {{- $years = $years | append $year -}}
+  {{- end -}}
+{{- end -}}
+{{- $years = sort $years "value" "desc" -}}
+{{- if $hasPreviously -}}
+  {{- $years = $years | append "Previously…" -}}
+{{- end -}}
+{{- range $years -}}
+  {{- $year := . -}}
+  {{- $books := index $data $year -}}
+<h2 id="{{ $year | lower | replaceRE `…` `` | replaceRE `\s` `-` }}">{{ $year }}</h2>
+<ul>
+  {{- range $books -}}
+    {{- if not .hidden -}}
+<li>{{ .title | replaceRE "'" "\u2019" }}{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<span class="author" data-author="{{ $a | lower }}">{{ $a | replaceRE "'" "\u2019" }}</span>{{- end }}{{- end }}</li>
+    {{- end -}}
+  {{- end }}
+</ul>
+{{- end }}
+  </div>
+{{- if site.Params.mapEnabled }}
+  <div class="map-panel" id="map-panel">
+    <button class="map-close-btn" id="map-close-btn" aria-label="Close map">&times;</button>
+    <iframe src="{{ site.Params.mapURL | default `authors_map.html` }}" title="World map of authors"></iframe>
+  </div>
+{{- end }}
+</div>
+{{- if site.Params.mapEnabled }}
+<button class="map-toggle-btn" id="map-toggle-btn">View authors map</button>
+{{- end }}
+{{- end }}
+
+{{ define "scripts" -}}
+{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $iso := hugo.Data.iso3166 -}}
+{{- $countryToCode := dict -}}
+{{- $usedCountries := dict -}}
+{{- range $name, $country := $authorCountries -}}
+  {{- if $country -}}
+    {{- $usedCountries = merge $usedCountries (dict $country true) -}}
+  {{- end -}}
+{{- end -}}
+{{- range $code, $country := $iso -}}
+  {{- if isset $usedCountries $country -}}
+    {{- $countryToCode = merge $countryToCode (dict $country $code) -}}
+  {{- end -}}
+{{- end }}
+<script>
+var authorCountries = {{ $authorCountries | jsonify | safeJS }};
+var countryToCode = {{ $countryToCode | jsonify | safeJS }};
+</script>
+{{- $js := resources.Get "js/reading-log.js" }}
+<script>{{ $js.Content | safeJS }}</script>
+{{- end }}

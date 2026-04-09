@@ -1,0 +1,12 @@
+name = "Hugo Reading Log"
+license = "MIT"
+licenselink = "https://github.com/nbr23/hugo-reading-log/blob/master/LICENSE"
+description = "A minimal single-page reading log theme for Hugo with optional interactive author nationality map."
+homepage = "https://github.com/nbr23/hugo-reading-log"
+tags = ["reading", "books", "minimal", "single-page", "responsive", "personal"]
+features = ["reading log", "author nationality map"]
+min_version = "0.159.0"
+
+[author]
+  name = "nbr23"
+  homepage = "https://github.com/nbr23"

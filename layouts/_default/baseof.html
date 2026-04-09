@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>{{ site.Params.siteTitle | default site.Title }}</title>
+  {{- $css := resources.Get "css/reading-log.css" }}
+  <style>{{ $css.Content | safeCSS }}</style>
+</head>
+<body>
+{{ block "main" . }}{{ end }}
+{{- block "scripts" . }}{{ end }}
+</body>
+</html>
