@@ -271,3 +271,6 @@ vertical-align: middle;
 .author-flag {
   margin-left: 4px;
 }
+.filtered-out {
+  display: none;
+}

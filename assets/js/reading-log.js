@@ -27,54 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  document.querySelectorAll('.author').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var author = this.getAttribute('data-author');
-      var isHighlighted = this.classList.contains('highlighted');
+  var activeAuthor = null;
 
-      document.querySelectorAll('.author.highlighted').forEach(function(a) {
-        a.classList.remove('highlighted');
-        var countSpan = a.querySelector('.author-count');
-        if (countSpan) countSpan.remove();
-        var flagSpan = a.querySelector('.author-flag');
-        if (flagSpan) flagSpan.remove();
-      });
-
-      if (!isHighlighted) {
-        var matches = document.querySelectorAll('.author[data-author="' + author + '"]');
-        var count = matches.length;
-        var authorName = this.textContent;
-        var country = authorCountries[authorName];
-        matches.forEach(function(a) {
-          a.classList.add('highlighted');
-          if (count > 1) {
-            var countSpan = document.createElement('span');
-            countSpan.className = 'author-count';
-            countSpan.textContent = ' (' + count + ' books)';
-            a.appendChild(countSpan);
-          }
-          if (country) {
-            var code = countryToCode[country];
-            if (code) {
-              var flagSpan = document.createElement('span');
-              flagSpan.className = 'author-flag';
-              flagSpan.textContent = getFlagEmoji(code);
-              flagSpan.title = country;
-              a.appendChild(flagSpan);
-            } else {
-              var countrySpan = document.createElement('span');
-              countrySpan.className = 'author-count';
-              countrySpan.textContent = ' (' + country + ')';
-              a.appendChild(countrySpan);
-            }
-          }
-        });
-      }
-    });
-  });
-
-  document.addEventListener('click', function() {
+  function clearFilter() {
+    activeAuthor = null;
     document.querySelectorAll('.author.highlighted').forEach(function(a) {
       a.classList.remove('highlighted');
       var countSpan = a.querySelector('.author-count');
@@ -82,6 +38,84 @@ document.addEventListener('DOMContentLoaded', function() {
       var flagSpan = a.querySelector('.author-flag');
       if (flagSpan) flagSpan.remove();
     });
+    document.querySelectorAll('.book-list > ul > li').forEach(function(li) {
+      li.classList.remove('filtered-out');
+    });
+    document.querySelectorAll('.book-list h2').forEach(function(h2) {
+      h2.classList.remove('filtered-out');
+    });
+  }
+
+  document.querySelectorAll('.author').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var author = this.getAttribute('data-author');
+
+      if (activeAuthor === author) {
+        clearFilter();
+        return;
+      }
+
+      clearFilter();
+      activeAuthor = author;
+
+      var matches = document.querySelectorAll('.author[data-author="' + author + '"]');
+      var count = matches.length;
+      var authorName = this.textContent;
+      var country = authorCountries[authorName];
+
+      matches.forEach(function(a) {
+        a.classList.add('highlighted');
+        if (count > 1) {
+          var countSpan = document.createElement('span');
+          countSpan.className = 'author-count';
+          countSpan.textContent = ' (' + count + ' books)';
+          a.appendChild(countSpan);
+        }
+        if (country) {
+          var code = countryToCode[country];
+          if (code) {
+            var flagSpan = document.createElement('span');
+            flagSpan.className = 'author-flag';
+            flagSpan.textContent = getFlagEmoji(code);
+            flagSpan.title = country;
+            a.appendChild(flagSpan);
+          } else {
+            var countrySpan = document.createElement('span');
+            countrySpan.className = 'author-count';
+            countrySpan.textContent = ' (' + country + ')';
+            a.appendChild(countrySpan);
+          }
+        }
+      });
+
+      document.querySelectorAll('.book-list > ul > li').forEach(function(li) {
+        var hasAuthor = li.querySelector('.author[data-author="' + author + '"]');
+        if (!hasAuthor) {
+          li.classList.add('filtered-out');
+        }
+      });
+
+      document.querySelectorAll('.book-list h2').forEach(function(h2) {
+        var ul = h2.nextElementSibling;
+        if (ul && ul.tagName === 'UL') {
+          var visibleItems = ul.querySelectorAll('li:not(.filtered-out)');
+          if (visibleItems.length === 0) {
+            h2.classList.add('filtered-out');
+          }
+        }
+      });
+    });
+  });
+
+  document.addEventListener('click', function() {
+    clearFilter();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && activeAuthor) {
+      clearFilter();
+    }
   });
 
   var mapPanel = document.getElementById('map-panel');
