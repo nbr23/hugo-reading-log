@@ -42,10 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
     activeCountry = null;
     document.querySelectorAll('.author.highlighted').forEach(function(a) {
       a.classList.remove('highlighted');
-      var countSpan = a.querySelector('.author-count');
-      if (countSpan) countSpan.remove();
-      var flagSpan = a.querySelector('.author-flag');
-      if (flagSpan) flagSpan.remove();
+      a.querySelectorAll('.author-count').forEach(function(s) { s.remove(); });
+      a.querySelectorAll('.author-flag').forEach(function(s) { s.remove(); });
     });
     document.querySelectorAll('.book-list > ul > li').forEach(function(li) {
       li.classList.remove('filtered-out');
@@ -83,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function decorateAuthors(matches, authorName) {
     var count = matches.length;
-    var country = authorCountries[authorName];
+    var countries = authorCountries[authorName] || [];
     matches.forEach(function(a) {
       a.classList.add('highlighted');
       if (count > 1) {
@@ -92,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         countSpan.textContent = ' (' + count + ' books)';
         a.appendChild(countSpan);
       }
-      if (country) {
+      countries.forEach(function(country) {
         var code = countryToCode[country];
         if (code) {
           var flagSpan = document.createElement('span');
@@ -106,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
           countrySpan.textContent = ' (' + country + ')';
           a.appendChild(countrySpan);
         }
-      }
+      });
     });
   }
 
@@ -130,7 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var matchingKeys = [];
     for (var name in authorCountries) {
-      if (authorCountries[name] === country) {
+      var list = authorCountries[name] || [];
+      if (list.indexOf(country) !== -1) {
         matchingKeys.push(name.toLowerCase());
       }
     }

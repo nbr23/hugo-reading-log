@@ -48,8 +48,8 @@
 {{- $iso := hugo.Data.iso3166 -}}
 {{- $countryToCode := dict -}}
 {{- $usedCountries := dict -}}
-{{- range $name, $country := $authorCountries -}}
-  {{- if $country -}}
+{{- range $name, $countries := $authorCountries -}}
+  {{- range $country := $countries -}}
     {{- $usedCountries = merge $usedCountries (dict $country true) -}}
   {{- end -}}
 {{- end -}}
