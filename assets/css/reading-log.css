@@ -154,9 +154,17 @@ margin-top: 0;
   border-bottom: 2px solid #1a1a1a;
   padding-bottom: 0.3em;
   margin-top: 2em;
+  cursor: pointer;
 }
 .book-list h2:first-of-type {
   margin-top: 0;
+}
+.book-list h2:hover {
+  color: #000;
+}
+.book-list h2.year-active {
+  color: #b22222;
+  border-bottom-color: #b22222;
 }
 blockquote {
 margin: 1em 0 1em 1.7em;
