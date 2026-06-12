@@ -6,6 +6,10 @@
   <title>{{ site.Params.siteTitle | default site.Title }}</title>
   {{- $css := resources.Get "css/reading-log.css" }}
   <style>{{ $css.Content | safeCSS }}</style>
+  {{- if ne site.Params.darkModeEnabled false }}
+  {{- $darkCss := resources.Get "css/reading-log-dark.css" }}
+  <style>{{ $darkCss.Content | safeCSS }}</style>
+  {{- end }}
 </head>
 <body>
 {{ block "main" . }}{{ end }}

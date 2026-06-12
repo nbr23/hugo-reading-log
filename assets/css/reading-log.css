@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --color-text: #1a1a1a;
   --color-bg: #fdfdfd;
   --color-border: #e6e6e6;
@@ -13,23 +13,6 @@
   --color-highlight-bg: #fff3cd;
   --color-btn-bg: #1a1a1a;
   --color-btn-text: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-text: #d8dce3;
-    --color-bg: #1d2430;
-    --color-border: #3c4454;
-    --color-border-light: #2e3543;
-    --color-heading: #c7cdd7;
-    --color-heading-hover: #f0f3f7;
-    --color-muted: #8d95a2;
-    --color-author: #a5adba;
-    --color-quote: #99a1ae;
-    --color-accent: #e0756a;
-    --color-highlight-bg: #46402a;
-    --color-btn-bg: #d8dce3;
-    --color-btn-text: #1d2430;
-  }
 }
 html, body {
   height: 100%;

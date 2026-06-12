@@ -125,7 +125,10 @@ Any self-contained HTML map can be used — set `mapURL` to its path under `stat
   mapURL = "authors_map.html"    # path to map HTML in static/ (default: "authors_map.html")
   statsEnabled = true            # show the stats summary under the title (default: true)
   totalCountries = 195           # denominator for the countries-read counter (default: 195)
+  darkModeEnabled = true         # follow the system color scheme (default: true; false forces light)
 ```
+
+When `darkModeEnabled = false`, generate the map with `--no-dark-mode` so both stay light.
 
 ## Features
 
