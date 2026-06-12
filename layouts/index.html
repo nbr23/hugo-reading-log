@@ -1,10 +1,38 @@
 {{ define "main" -}}
 <div class="container">
   <div class="book-list">
+{{- $data := hugo.Data.reading_log -}}
+{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $totalBooks := 0 -}}
+{{- $authorsSeen := dict -}}
+{{- $countriesSeen := dict -}}
+{{- range $year, $books := $data -}}
+  {{- range $books -}}
+    {{- if not .hidden -}}
+      {{- $totalBooks = add $totalBooks 1 -}}
+      {{- range .authors -}}
+        {{- $authorsSeen = merge $authorsSeen (dict (lower .) true) -}}
+        {{- with index $authorCountries . -}}
+          {{- range . -}}
+            {{- $countriesSeen = merge $countriesSeen (dict . true) -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $totalCountries := site.Params.totalCountries | default 195 }}
     <header id="title-block-header">
       <h1 class="title">{{ site.Params.siteTitle | default site.Title }}</h1>
+{{- if ne site.Params.statsEnabled false }}
+      <div class="stats">
+        <span>{{ $totalBooks }} book{{ if ne $totalBooks 1 }}s{{ end }}</span> · <span>{{ len $authorsSeen }} author{{ if ne (len $authorsSeen) 1 }}s{{ end }}</span> · <span>{{ len $countriesSeen }}/{{ $totalCountries }} countries</span>
+        <div class="stats-progress" role="progressbar" aria-label="Countries read" aria-valuemin="0" aria-valuemax="{{ $totalCountries }}" aria-valuenow="{{ len $countriesSeen }}">
+          <div class="stats-progress-bar" style="width: {{ lang.FormatNumber 1 (div (mul 100.0 (len $countriesSeen)) $totalCountries) }}%"></div>
+        </div>
+      </div>
+{{- end }}
     </header>
-{{- $data := hugo.Data.reading_log -}}
 {{- $years := slice -}}
 {{- $hasPreviously := false -}}
 {{- range $year, $books := $data -}}

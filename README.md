@@ -123,11 +123,14 @@ Any self-contained HTML map can be used — set `mapURL` to its path under `stat
   siteTitle = "My Reading Log"  # defaults to site title
   mapEnabled = true              # show the map panel (default: true)
   mapURL = "authors_map.html"    # path to map HTML in static/ (default: "authors_map.html")
+  statsEnabled = true            # show the stats summary under the title (default: true)
+  totalCountries = 195           # denominator for the countries-read counter (default: 195)
 ```
 
 ## Features
 
 - Single-page responsive layout (book list + map panel)
+- Stats summary: total books, unique authors, and a countries-read progress bar
 - Click an author to highlight all their books with country flag(s)
 - Hover a year heading to see book count
 - Mobile: map opens as a full-screen overlay
