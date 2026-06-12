@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var span = h2.querySelector('.book-count');
         if (span) span.remove();
       });
-      h2.addEventListener('click', function(e) {
+      var yearToggle = h2.querySelector('.year-toggle') || h2;
+      yearToggle.addEventListener('click', function(e) {
         e.stopPropagation();
         if (activeYear === h2) {
           clearFilter();
@@ -52,8 +53,12 @@ document.addEventListener('DOMContentLoaded', function() {
     activeYear = null;
     document.querySelectorAll('.author.highlighted').forEach(function(a) {
       a.classList.remove('highlighted');
+      a.setAttribute('aria-pressed', 'false');
       a.querySelectorAll('.author-count').forEach(function(s) { s.remove(); });
       a.querySelectorAll('.author-flag').forEach(function(s) { s.remove(); });
+    });
+    document.querySelectorAll('.year-toggle[aria-pressed="true"]').forEach(function(b) {
+      b.setAttribute('aria-pressed', 'false');
     });
     document.querySelectorAll('.book-list > ul > li').forEach(function(li) {
       li.classList.remove('filtered-out');
@@ -86,6 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     h2.classList.add('year-active');
+    var yearToggle = h2.querySelector('.year-toggle');
+    if (yearToggle) yearToggle.setAttribute('aria-pressed', 'true');
 
     var authors = Array.prototype.map.call(ul.querySelectorAll('.author'), function(el) {
       return el.textContent;
@@ -122,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var countries = authorCountries[authorName] || [];
     matches.forEach(function(a) {
       a.classList.add('highlighted');
+      a.setAttribute('aria-pressed', 'true');
       if (count > 1) {
         var countSpan = document.createElement('span');
         countSpan.className = 'author-count';
@@ -135,6 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
           flagSpan.className = 'author-flag';
           flagSpan.textContent = getFlagEmoji(code);
           flagSpan.title = country;
+          flagSpan.setAttribute('role', 'img');
+          flagSpan.setAttribute('aria-label', country);
           a.appendChild(flagSpan);
         } else {
           var countrySpan = document.createElement('span');
@@ -175,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     matchingKeys.forEach(function(key) {
       document.querySelectorAll('.author[data-author="' + key + '"]').forEach(function(a) {
         a.classList.add('highlighted');
+        a.setAttribute('aria-pressed', 'true');
       });
     });
 

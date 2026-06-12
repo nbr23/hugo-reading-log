@@ -21,11 +21,11 @@
 {{- range $years -}}
   {{- $year := . -}}
   {{- $books := index $data $year -}}
-<h2 id="{{ $year | lower | replaceRE `…` `` | replaceRE `\s` `-` }}">{{ $year }}</h2>
+<h2 id="{{ $year | lower | replaceRE `…` `` | replaceRE `\s` `-` }}"><button type="button" class="year-toggle" aria-pressed="false">{{ $year }}</button></h2>
 <ul>
   {{- range $books -}}
     {{- if not .hidden -}}
-<li>{{ .title | replaceRE "'" "\u2019" }}{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<span class="author" data-author="{{ $a | lower }}">{{ $a | replaceRE "'" "\u2019" }}</span>{{- end }}{{- end }}</li>
+<li>{{ .title | replaceRE "'" "\u2019" }}{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<button type="button" class="author" data-author="{{ $a | lower }}" aria-pressed="false">{{ $a | replaceRE "'" "\u2019" }}</button>{{- end }}{{- end }}</li>
     {{- end -}}
   {{- end }}
 </ul>

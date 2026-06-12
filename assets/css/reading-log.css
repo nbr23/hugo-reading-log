@@ -1,9 +1,42 @@
+:root {
+  color-scheme: light dark;
+  --color-text: #1a1a1a;
+  --color-bg: #fdfdfd;
+  --color-border: #e6e6e6;
+  --color-border-light: #eee;
+  --color-heading: #333;
+  --color-heading-hover: #000;
+  --color-muted: #666;
+  --color-author: #555;
+  --color-quote: #606060;
+  --color-accent: #b22222;
+  --color-highlight-bg: #fff3cd;
+  --color-btn-bg: #1a1a1a;
+  --color-btn-text: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #e3e3e3;
+    --color-bg: #161616;
+    --color-border: #383838;
+    --color-border-light: #2c2c2c;
+    --color-heading: #d0d0d0;
+    --color-heading-hover: #fff;
+    --color-muted: #9a9a9a;
+    --color-author: #a8a8a8;
+    --color-quote: #a0a0a0;
+    --color-accent: #e06c6c;
+    --color-highlight-bg: #4a3f14;
+    --color-btn-bg: #e3e3e3;
+    --color-btn-text: #161616;
+  }
+}
 html, body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  color: #1a1a1a;
-  background-color: #fdfdfd;
+  color: var(--color-text);
+  background-color: var(--color-bg);
 }
 .container {
   display: flex;
@@ -15,8 +48,8 @@ html, body {
   min-width: 280px;
   overflow-y: auto;
   padding: 30px;
-  background: #fdfdfd;
-  border-right: 1px solid #e6e6e6;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
   hyphens: auto;
   overflow-wrap: break-word;
   text-rendering: optimizeLegibility;
@@ -61,8 +94,8 @@ html, body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: #1a1a1a;
-    color: white;
+    background: var(--color-btn-bg);
+    color: var(--color-btn-text);
     border: none;
     padding: 12px 20px;
     border-radius: 25px;
@@ -107,10 +140,10 @@ p {
 margin: 1em 0;
 }
 a {
-color: #1a1a1a;
+color: var(--color-text);
 }
 a:visited {
-color: #1a1a1a;
+color: var(--color-text);
 }
 img {
 max-width: 100%;
@@ -143,34 +176,42 @@ margin-top: 0;
 }
 .book-list > ul > li {
   padding: 0.6em 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
 }
 .book-list > ul > li:last-child {
   border-bottom: none;
 }
 .book-list h2 {
   font-size: 1.1em;
-  color: #333;
-  border-bottom: 2px solid #1a1a1a;
+  color: var(--color-heading);
+  border-bottom: 2px solid var(--color-text);
   padding-bottom: 0.3em;
   margin-top: 2em;
+  cursor: pointer;
+}
+.year-toggle {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
 }
 .book-list h2:first-of-type {
   margin-top: 0;
 }
 .book-list h2:hover {
-  color: #000;
+  color: var(--color-heading-hover);
 }
 .book-list h2.year-active {
-  color: #b22222;
-  border-bottom-color: #b22222;
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
 }
 blockquote {
 margin: 1em 0 1em 1.7em;
 padding-left: 1em;
-border-left: 2px solid #e6e6e6;
-color: #606060;
+border-left: 2px solid var(--color-border);
+color: var(--color-quote);
 }
 code {
 font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
@@ -192,7 +233,7 @@ background-color: transparent;
 overflow: visible;
 }
 hr {
-background-color: #1a1a1a;
+background-color: var(--color-text);
 border: none;
 height: 1px;
 margin: 1em 0;
@@ -210,11 +251,11 @@ margin-bottom: 0.75em;
 }
 tbody {
 margin-top: 0.5em;
-border-top: 1px solid #1a1a1a;
-border-bottom: 1px solid #1a1a1a;
+border-top: 1px solid var(--color-text);
+border-bottom: 1px solid var(--color-text);
 }
 th {
-border-top: 1px solid #1a1a1a;
+border-top: 1px solid var(--color-text);
 padding: 0.25em 0.5em 0.25em 0.5em;
 }
 td {
@@ -254,26 +295,36 @@ vertical-align: middle;
 }
 .display.math{display: block; text-align: center; margin: 0.5rem auto;}
 .book-count {
-  color: #666;
+  color: var(--color-muted);
   font-weight: normal;
   font-size: 0.8em;
   margin-left: 0.5em;
 }
 .author {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   font-style: italic;
-  color: #555;
+  color: var(--color-author);
+  text-align: left;
 }
 .author:hover {
   text-decoration: underline;
 }
+.author:focus-visible,
+.year-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .author.highlighted {
   font-weight: bold;
-  background-color: #fff3cd;
+  background-color: var(--color-highlight-bg);
 }
 .author-count {
   font-weight: normal;
-  color: #666;
+  color: var(--color-muted);
   font-size: 0.85em;
 }
 .author-flag {
