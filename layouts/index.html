@@ -53,7 +53,14 @@
 <ul>
   {{- range $books -}}
     {{- if not .hidden -}}
-<li>{{ .title | replaceRE "'" "\u2019" }}{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<button type="button" class="author" data-author="{{ $a | lower }}" aria-pressed="false">{{ $a | replaceRE "'" "\u2019" }}</button>{{- end }}{{- end }}</li>
+      {{- $rating := .rating | default 0 -}}
+      {{- $ratingClass := "" -}}
+      {{- if ge $rating 5 -}}
+        {{- $ratingClass = " rating-high" -}}
+      {{- else if le $rating -5 -}}
+        {{- $ratingClass = " rating-low" -}}
+      {{- end -}}
+<li{{ with $rating }} data-rating="{{ . }}"{{ end }}><span class="book-title{{ $ratingClass }}">{{ .title | replaceRE "'" "\u2019" }}</span>{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<button type="button" class="author" data-author="{{ $a | lower }}" aria-pressed="false">{{ $a | replaceRE "'" "\u2019" }}</button>{{- end }}{{- end }}</li>
     {{- end -}}
   {{- end }}
 </ul>

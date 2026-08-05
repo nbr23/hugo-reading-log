@@ -82,6 +82,7 @@ Top-level keys are years (or any string like `"Previously..."`). Each year maps 
 "Previously…":
   - title: L'Étranger
     authors: [Albert Camus]
+    rating: 5
 ```
 
 | Field | Type | Required | Description |
@@ -89,8 +90,23 @@ Top-level keys are years (or any string like `"Previously..."`). Each year maps 
 | `title` | string | yes | Book title |
 | `authors` | string[] | yes | Author names |
 | `hidden` | bool | no | Hide from the list |
+| `rating` | int | no | Preference on a -5..5 scale (see below); absent means 0 |
 
 Years are sorted descending. A key named `"Previously…"` is always placed last.
+
+### Ratings
+
+`rating` is an integer from -5 (strongly not recommended) to 5 (strongly recommended). Omitting it
+is the same as `0` — neutral, rendered exactly like an unrated book.
+
+Titles are wrapped in `<span class="book-title">`. Ratings at or above 5 also get `rating-high`
+(bold), and ratings at or below -5 get `rating-low` (muted); values in between are styled as
+neutral. The raw value is available as `data-rating` on the `<li>` whenever it is non-zero, so you
+can style intermediate values yourself:
+
+```css
+li[data-rating="3"] .book-title { font-weight: 600; }
+```
 
 ### `data/authors_cache.json` (generated)
 

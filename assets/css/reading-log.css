@@ -300,6 +300,12 @@ vertical-align: middle;
   font-size: 0.8em;
   margin-left: 0.5em;
 }
+.book-title.rating-high {
+  font-weight: 700;
+}
+.book-title.rating-low {
+  color: var(--color-muted);
+}
 .author {
   font: inherit;
   background: none;

@@ -1,6 +1,7 @@
 "2026":
   - title: Les Misérables
     authors: [Victor Hugo]
+    rating: 5
   - title: Fahrenheit 451
     authors: [Ray Bradbury]
     hidden: true
@@ -10,5 +11,6 @@
     authors: [Albert Camus]
   - title: Madame Bovary
     authors: [Gustave Flaubert]
+    rating: -5
   - title: Le Comte de Monte-Cristo
     authors: [Alexandre Dumas]
