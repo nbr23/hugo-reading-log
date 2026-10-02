@@ -268,9 +268,93 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  var tooltip = document.getElementById('stat-tooltip');
+  var tooltipTarget = null;
+  var tooltipPinned = false;
+
+  function setHeatAxes(cell, on) {
+    if (cell.tagName !== 'TD') return;
+    var table = cell.closest('table');
+    [cell.parentElement.cells[0], table.tHead.rows[0].cells[cell.cellIndex]].forEach(function(th) {
+      if (th) th.classList.toggle('is-hover', on);
+    });
+  }
+
+  function showTooltip(el) {
+    if (tooltipTarget && tooltipTarget !== el) setHeatAxes(tooltipTarget, false);
+    tooltipTarget = el;
+    tooltip.textContent = '';
+    var value = document.createElement('strong');
+    value.textContent = el.getAttribute('data-tip-value');
+    var label = document.createElement('div');
+    label.className = 'stat-tooltip-label';
+    label.textContent = el.getAttribute('data-tip-label');
+    tooltip.appendChild(value);
+    tooltip.appendChild(label);
+    JSON.parse(el.getAttribute('data-tip-detail') || '[]').forEach(function(line) {
+      var row = document.createElement('div');
+      row.className = 'stat-tooltip-detail';
+      row.textContent = line;
+      tooltip.appendChild(row);
+    });
+    tooltip.hidden = false;
+    setHeatAxes(el, true);
+
+    var rect = el.getBoundingClientRect();
+    var tipRect = tooltip.getBoundingClientRect();
+    var left = rect.left + rect.width / 2 - tipRect.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+    var top = rect.top - tipRect.height - 8;
+    if (top < 8) top = rect.bottom + 8;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }
+
+  function hideTooltip() {
+    if (!tooltip || tooltip.hidden) return;
+    tooltip.hidden = true;
+    tooltipPinned = false;
+    if (tooltipTarget) setHeatAxes(tooltipTarget, false);
+    tooltipTarget = null;
+  }
+
+  document.querySelectorAll('#panel-stats [data-tip-value]').forEach(function(el) {
+    el.addEventListener('pointerenter', function(e) {
+      if (e.pointerType === 'mouse' && !tooltipPinned) showTooltip(el);
+    });
+    el.addEventListener('pointerleave', function(e) {
+      if (e.pointerType === 'mouse' && !tooltipPinned) hideTooltip();
+    });
+    el.addEventListener('focus', function() {
+      if (!tooltipPinned) showTooltip(el);
+    });
+    el.addEventListener('blur', function() {
+      if (!tooltipPinned) hideTooltip();
+    });
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (tooltipPinned && tooltipTarget === el) {
+        hideTooltip();
+        return;
+      }
+      showTooltip(el);
+      tooltipPinned = true;
+    });
+  });
+
+  if (tooltip) {
+    document.addEventListener('click', hideTooltip);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') hideTooltip();
+    });
+    document.getElementById('panel-stats').addEventListener('scroll', hideTooltip);
+    window.addEventListener('resize', hideTooltip);
+  }
+
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.panel-tab'));
 
   function selectTab(tab) {
+    hideTooltip();
     tabs.forEach(function(t) {
       var selected = t === tab;
       t.setAttribute('aria-selected', selected ? 'true' : 'false');
