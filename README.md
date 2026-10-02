@@ -140,6 +140,8 @@ Any self-contained HTML map can be used — set `mapURL` to its path under `stat
   mapEnabled = true              # show the map panel (default: true)
   mapURL = "authors_map.html"    # path to map HTML in static/ (default: "authors_map.html")
   statsEnabled = true            # show the stats summary under the title (default: true)
+  statsPanelEnabled = true       # show the Stats tab next to the map (default: true)
+  statsTopAuthors = 15           # authors shown in the Stats tab charts (default: 15)
   totalCountries = 195           # denominator for the countries-read counter (default: 195)
   darkModeEnabled = true         # follow the system color scheme (default: true; false forces light)
 ```
@@ -150,6 +152,7 @@ When `darkModeEnabled = false`, generate the map with `--no-dark-mode` so both s
 
 - Single-page responsive layout (book list + map panel)
 - Stats summary: total books, unique authors, and a countries-read progress bar
+- Stats tab: most-read authors, an authors-by-year heatmap, books per year, and top author countries; click any bar, row or year to filter the list
 - Click an author to highlight all their books with country flag(s)
 - Hover a year heading to see book count
 - Mobile: map opens as a full-screen overlay

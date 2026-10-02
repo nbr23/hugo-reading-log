@@ -5,3 +5,4 @@ theme = "hugo-reading-log"
 
 [params]
   mapEnabled = true
+  statsPanelEnabled = true

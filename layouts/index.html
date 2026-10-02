@@ -66,15 +66,33 @@
 </ul>
 {{- end }}
   </div>
-{{- if site.Params.mapEnabled }}
+{{- $mapOn := site.Params.mapEnabled -}}
+{{- $statsOn := ne site.Params.statsPanelEnabled false -}}
+{{- $tabsOn := and $mapOn $statsOn -}}
+{{- if or $mapOn $statsOn }}
   <div class="map-panel" id="map-panel">
-    <button class="map-close-btn" id="map-close-btn" aria-label="Close map">&times;</button>
-    <iframe src="{{ site.Params.mapURL | default `authors_map.html` }}" title="World map of authors"></iframe>
+    <button class="map-close-btn" id="map-close-btn" aria-label="Close panel">&times;</button>
+{{- if $tabsOn }}
+    <div class="panel-tabs" role="tablist" aria-label="Map and stats">
+      <button type="button" class="panel-tab" role="tab" id="tab-map" aria-controls="panel-map" aria-selected="true">Map</button>
+      <button type="button" class="panel-tab" role="tab" id="tab-stats" aria-controls="panel-stats" aria-selected="false" tabindex="-1">Stats</button>
+    </div>
+{{- end }}
+{{- if $mapOn }}
+    <div class="panel-view" id="panel-map"{{ if $tabsOn }} role="tabpanel" aria-labelledby="tab-map"{{ end }}>
+      <iframe src="{{ site.Params.mapURL | default `authors_map.html` }}" title="World map of authors"></iframe>
+    </div>
+{{- end }}
+{{- if $statsOn }}
+    <div class="panel-view stats-panel" id="panel-stats"{{ if $tabsOn }} role="tabpanel" aria-labelledby="tab-stats" hidden{{ end }}>
+      {{- partial "stats.html" . }}
+    </div>
+{{- end }}
   </div>
 {{- end }}
 </div>
-{{- if site.Params.mapEnabled }}
-<button class="map-toggle-btn" id="map-toggle-btn">View authors map</button>
+{{- if or $mapOn $statsOn }}
+<button class="map-toggle-btn" id="map-toggle-btn">{{ if $tabsOn }}View map &amp; stats{{ else if $mapOn }}View authors map{{ else }}View stats{{ end }}</button>
 {{- end }}
 {{- end }}
 

@@ -1,0 +1,106 @@
+{{- $data := hugo.Data.reading_log -}}
+{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $topN := site.Params.statsTopAuthors | default 15 -}}
+{{- $authors := dict -}}
+{{- $countries := dict -}}
+{{- $yearCounts := dict -}}
+{{- range $year, $books := $data -}}
+  {{- $isYear := ne $year "Previously…" -}}
+  {{- range $books -}}
+    {{- if not .hidden -}}
+      {{- if $isYear -}}
+        {{- $yearCounts = merge $yearCounts (dict $year (add (index $yearCounts $year | default 0) 1)) -}}
+      {{- end -}}
+      {{- $bookCountries := dict -}}
+      {{- range .authors -}}
+        {{- $key := lower . -}}
+        {{- $entry := index $authors $key | default (dict "name" . "count" 0 "years" dict) -}}
+        {{- $authorYears := $entry.years -}}
+        {{- if $isYear -}}
+          {{- $authorYears = merge $authorYears (dict $year (add (index $authorYears $year | default 0) 1)) -}}
+        {{- end -}}
+        {{- $authors = merge $authors (dict $key (dict "name" $entry.name "count" (add $entry.count 1) "years" $authorYears)) -}}
+        {{- range index $authorCountries . -}}
+          {{- $bookCountries = merge $bookCountries (dict . true) -}}
+        {{- end -}}
+      {{- end -}}
+      {{- range $country, $_ := $bookCountries -}}
+        {{- $prev := index $countries $country | default (dict "count" 0) -}}
+        {{- $countries = merge $countries (dict $country (dict "name" $country "count" (add $prev.count 1))) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $topAuthors := first $topN (sort (sort $authors "name" "asc") "count" "desc") -}}
+{{- $topCountries := first 15 (sort (sort $countries "name" "asc") "count" "desc") -}}
+{{- $years := slice -}}
+{{- range $year, $_ := $yearCounts -}}
+  {{- $years = $years | append $year -}}
+{{- end -}}
+{{- $years = sort $years -}}
+{{- $maxYear := 1 -}}
+{{- range $yearCounts -}}
+  {{- $maxYear = math.Max $maxYear . -}}
+{{- end -}}
+{{- $maxHeat := 1 -}}
+{{- range $topAuthors -}}
+  {{- range .years -}}
+    {{- $maxHeat = math.Max $maxHeat . -}}
+  {{- end -}}
+{{- end }}
+{{- with $topAuthors }}
+<section class="stats-section" aria-labelledby="stats-authors-title">
+  <h3 id="stats-authors-title">Most-read authors</h3>
+  <ol class="stat-bars">
+  {{- $max := (index . 0).count }}
+  {{- range . }}
+    <li><button type="button" class="stat-bar" data-author="{{ lower .name }}" data-name="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}"><span class="stat-label">{{ .name | replaceRE "'" "’" }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}
+{{- if and $years $topAuthors }}
+<section class="stats-section" aria-labelledby="stats-heatmap-title">
+  <h3 id="stats-heatmap-title">Most-read authors by year</h3>
+  <div class="stat-heatmap-wrap">
+  <table class="stat-heatmap">
+    <thead>
+      <tr><td></td>
+      {{- range $years }}<th scope="col"><button type="button" class="stat-year" data-year-id="{{ . | lower | replaceRE `…` `` | replaceRE `\s` `-` }}">{{ . }}</button></th>{{ end }}</tr>
+    </thead>
+    <tbody>
+    {{- range $topAuthors }}
+      {{- $author := . }}
+      <tr><th scope="row"><button type="button" class="stat-row-label" data-author="{{ lower .name }}" data-name="{{ .name }}">{{ .name | replaceRE "'" "’" }}</button></th>
+      {{- range $years }}
+        {{- $n := index $author.years . | default 0 }}
+        {{- if $n }}<td class="heat" style="--heat: {{ add 0.15 (mul 0.85 (div (float $n) $maxHeat)) }}" title="{{ $author.name }}, {{ . }}: {{ $n }} book{{ if ne $n 1 }}s{{ end }}"><span class="visually-hidden">{{ $n }}</span></td>{{ else }}<td><span class="visually-hidden">0</span></td>{{ end }}
+      {{- end }}</tr>
+    {{- end }}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{- end }}
+{{- if $years }}
+<section class="stats-section" aria-labelledby="stats-years-title">
+  <h3 id="stats-years-title">Books per year</h3>
+  <ol class="stat-columns">
+  {{- range $years }}
+    {{- $n := index $yearCounts . }}
+    <li><button type="button" class="stat-column" data-year-id="{{ . | lower | replaceRE `…` `` | replaceRE `\s` `-` }}" aria-label="{{ . }}: {{ $n }} book{{ if ne $n 1 }}s{{ end }}"><span class="stat-column-track"><span class="stat-value">{{ $n }}</span><span class="stat-fill" style="--pct: {{ div (float $n) $maxYear }}"></span></span><span class="stat-label">{{ . }}</span></button></li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}
+{{- with $topCountries }}
+<section class="stats-section" aria-labelledby="stats-countries-title">
+  <h3 id="stats-countries-title">Top author countries</h3>
+  <ol class="stat-bars">
+  {{- $max := (index . 0).count }}
+  {{- range . }}
+    <li><button type="button" class="stat-bar" data-country="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}"><span class="stat-label">{{ .name }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}

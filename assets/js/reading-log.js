@@ -232,6 +232,67 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  document.querySelectorAll('#panel-stats [data-author]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (activeAuthor === this.getAttribute('data-author')) {
+        clearFilter();
+        return;
+      }
+      filterByAuthor(this.getAttribute('data-name'), false);
+    });
+  });
+
+  document.querySelectorAll('#panel-stats [data-year-id]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var h2 = document.getElementById(this.getAttribute('data-year-id'));
+      if (!h2) return;
+      if (activeYear === h2) {
+        clearFilter();
+      } else {
+        filterByYear(h2);
+      }
+    });
+  });
+
+  document.querySelectorAll('#panel-stats [data-country]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var country = this.getAttribute('data-country');
+      if (activeCountry === country) {
+        clearFilter();
+      } else {
+        filterByCountry(country, false);
+      }
+    });
+  });
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.panel-tab'));
+
+  function selectTab(tab) {
+    tabs.forEach(function(t) {
+      var selected = t === tab;
+      t.setAttribute('aria-selected', selected ? 'true' : 'false');
+      t.tabIndex = selected ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !selected;
+    });
+  }
+
+  tabs.forEach(function(tab, i) {
+    tab.addEventListener('click', function(e) {
+      e.stopPropagation();
+      selectTab(tab);
+    });
+    tab.addEventListener('keydown', function(e) {
+      var step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!step) return;
+      var next = tabs[(i + step + tabs.length) % tabs.length];
+      selectTab(next);
+      next.focus();
+    });
+  });
+
   var mapPanel = document.getElementById('map-panel');
   var mapToggleBtn = document.getElementById('map-toggle-btn');
   var mapCloseBtn = document.getElementById('map-close-btn');
