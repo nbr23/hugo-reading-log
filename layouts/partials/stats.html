@@ -92,7 +92,7 @@
 {{- end }}
 <div class="stats-scope-control">
   <label for="stats-scope">Reading period</label>
-  <select id="stats-scope" aria-controls="stats-rankings">
+  <select id="stats-scope" aria-controls="stats-rankings" autocomplete="off">
     <option value="all">All time</option>
     {{- range sort $years "value" "desc" }}
     <option value="{{ . }}">{{ . }}</option>
@@ -103,8 +103,9 @@
   <span data-filter-summary></span>
   <button type="button" data-clear-filter>Clear filters</button>
 </div>
+<div class="stats-dashboard">
 {{- with $yearSummaries }}
-<section class="stats-section" aria-labelledby="stats-summary-title">
+<section class="stats-section stats-section-wide" aria-labelledby="stats-summary-title">
   <h3 id="stats-summary-title">Year summaries</h3>
   <p class="stat-note" id="stats-summary-note">Countries use available author data. Top-author share counts books credited to that author, including coauthored books, as a percentage of the year’s books.</p>
   <div class="stat-summary-wrap">
@@ -145,18 +146,18 @@
 </section>
 {{- end }}
 <div id="stats-rankings">
-  <div data-stats-scope="all">
+  <div class="stats-grid" data-stats-scope="all">
     {{- partial "stats-rankings.html" (dict "authors" $authors "countries" $countries "topN" $topN "scope" "all") }}
   </div>
   {{- range $years }}
     {{- $year := . }}
-  <div data-stats-scope="{{ $year }}" hidden>
+  <div class="stats-grid" data-stats-scope="{{ $year }}" hidden>
     {{- partial "stats-rankings.html" (dict "authors" (index $yearAuthorsByYear $year) "countries" (index $countryYears $year | default dict) "topN" $topN "scope" $year) }}
   </div>
   {{- end }}
 </div>
 {{- if and $years $topAuthors }}
-<section class="stats-section" aria-labelledby="stats-heatmap-title">
+<section class="stats-section stats-section-wide" aria-labelledby="stats-heatmap-title">
   <h3 id="stats-heatmap-title">Most-read authors by year</h3>
   <p class="stat-note">Select a cell to show that author’s books for the year.</p>
   <div class="stat-heatmap-wrap">
@@ -311,4 +312,5 @@
   </ol>
 </section>
 {{- end }}
+</div>
 <div class="stat-tooltip" id="stat-tooltip" role="tooltip" hidden></div>

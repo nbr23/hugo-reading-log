@@ -513,5 +513,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  setStatsScope('all');
   updateFilterState();
 });
