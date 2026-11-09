@@ -81,7 +81,9 @@ document.addEventListener('DOMContentLoaded', function() {
       el.setAttribute('aria-pressed', String(Boolean(selected)));
     });
     document.querySelectorAll('#panel-stats [data-country]').forEach(function(el) {
-      el.setAttribute('aria-pressed', String(activeCountry === el.getAttribute('data-country')));
+      var year = el.getAttribute('data-country-year');
+      var selected = activeCountry === el.getAttribute('data-country') && (!year || (activeYear && activeYear.id === year));
+      el.setAttribute('aria-pressed', String(Boolean(selected)));
     });
   }
 
@@ -350,10 +352,17 @@ document.addEventListener('DOMContentLoaded', function() {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       var country = this.getAttribute('data-country');
-      if (activeCountry === country) {
+      var yearId = this.getAttribute('data-country-year');
+      var year = yearId ? document.getElementById(yearId) : statsYear();
+      if (activeCountry === country && activeYear === year) {
         clearFilter();
       } else {
-        filterByCountry(country, false, statsYear());
+        filterByCountry(country, false, year);
+      }
+      var mapTab = document.getElementById('tab-map');
+      if (mapTab && this.hasAttribute('data-show-map')) {
+        selectTab(mapTab);
+        mapTab.focus();
       }
     });
   });

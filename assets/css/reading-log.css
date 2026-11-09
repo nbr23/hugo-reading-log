@@ -172,6 +172,37 @@ html, body {
   overflow: hidden;
   border-radius: 0 4px 4px 0;
 }
+.stat-country-years > li {
+  margin-bottom: 0.5em;
+}
+.stat-country-discoveries {
+  margin: 0.3em 0 0.6em;
+  color: var(--color-muted);
+  font-size: 0.9em;
+}
+.stat-country-discoveries summary {
+  cursor: pointer;
+}
+.stat-country-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.5em;
+}
+.stat-country-links button {
+  font: inherit;
+  color: var(--color-author);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 0.2em 0.5em;
+  cursor: pointer;
+}
+.stat-country-links button:hover,
+.stat-country-links button[aria-pressed="true"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
 .stat-bars,
 .stat-columns {
   list-style: none;
@@ -380,6 +411,8 @@ html, body {
 .stat-year:focus-visible,
 .stat-heat-cell:focus-visible,
 .filter-status button:focus-visible,
+.stat-country-links button:focus-visible,
+.stat-country-discoveries summary:focus-visible,
 .stats-scope-control select:focus-visible,
 .panel-tab:focus-visible {
   outline: 2px solid var(--color-accent);

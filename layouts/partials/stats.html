@@ -4,6 +4,7 @@
 {{- $authors := dict -}}
 {{- $countries := dict -}}
 {{- $countryYears := dict -}}
+{{- $previousCountries := dict -}}
 {{- $yearCounts := dict -}}
 {{- range $year, $books := $data -}}
   {{- $isYear := ne $year "Previously…" -}}
@@ -34,6 +35,8 @@
           {{- $prevYear := index $yearCountries $country | default (dict "count" 0 "authors" dict) -}}
           {{- $yearCountries = merge $yearCountries (dict $country (dict "name" $country "count" (add $prevYear.count 1) "authors" (merge $prevYear.authors $countryAuthors))) -}}
           {{- $countryYears = merge $countryYears (dict $year $yearCountries) -}}
+        {{- else -}}
+          {{- $previousCountries = merge $previousCountries (dict $country true) -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
@@ -148,6 +151,74 @@
   {{- end }}
   </ol>
 </section>
+{{- end }}
+{{- if $countries }}
+{{- $countryHistory := slice }}
+{{- $coverageHistory := slice }}
+{{- $seenCountries := $previousCountries }}
+{{- $maxCountryYear := 1 }}
+{{- with $previousCountries }}
+  {{- $coverageHistory = $coverageHistory | append (dict "year" "Previously…" "label" "Earlier" "id" "previously" "total" (len .) "detail" (slice "Before dated entries")) }}
+{{- end }}
+{{- range $years }}
+  {{- $yearCountries := index $countryYears . | default dict }}
+  {{- $new := slice }}
+  {{- range $country, $_ := $yearCountries }}
+    {{- if not (isset $seenCountries $country) }}
+      {{- $new = $new | append $country }}
+      {{- $seenCountries = merge $seenCountries (dict $country true) }}
+    {{- end }}
+  {{- end }}
+  {{- $countryHistory = $countryHistory | append (dict "year" . "count" (len $yearCountries) "new" (sort $new) "returning" (sub (len $yearCountries) (len $new))) }}
+  {{- $coverageHistory = $coverageHistory | append (dict "year" . "label" . "id" . "total" (len $seenCountries) "detail" (slice (printf "%d new this year" (len $new)))) }}
+  {{- $maxCountryYear = math.Max $maxCountryYear (len $yearCountries) }}
+{{- end }}
+{{- if $countryHistory }}
+<section class="stats-section" aria-labelledby="stats-country-years-title">
+  <h3 id="stats-country-years-title">Author countries by year</h3>
+  <p class="stat-note">Each country counts once per year. New means first recorded in this log; countries in “Previously…” are already known. Authors without country data are excluded.</p>
+  <div class="stat-legend"><span><i class="stat-new" aria-hidden="true"></i>New</span><span><i class="stat-returning" aria-hidden="true"></i>Already recorded</span></div>
+  <ol class="stat-bars stat-country-years">
+  {{- range $countryHistory }}
+    {{- $year := .year }}
+    <li>
+      <button type="button" class="stat-bar" data-year-id="{{ $year }}" aria-pressed="false" aria-label="{{ $year }}: {{ .count }} countries, {{ len .new }} new, {{ .returning }} already recorded" data-tip-value="{{ .count }} countr{{ if eq .count 1 }}y{{ else }}ies{{ end }}" data-tip-label="{{ $year }}" data-tip-detail="{{ slice (printf "%d new" (len .new)) (printf "%d already recorded" .returning) | jsonify }}"><span class="stat-label">{{ $year }}</span><span class="stat-track"><span class="stat-stack" style="--pct: {{ div (float .count) $maxCountryYear }}"><span class="stat-new" style="flex: {{ len .new }}"></span><span class="stat-returning" style="flex: {{ .returning }}"></span></span><span class="stat-value">{{ .count }}</span></span></button>
+      {{- with .new }}
+      <details class="stat-country-discoveries">
+        <summary aria-label="{{ $year }}: {{ len . }} new countr{{ if eq (len .) 1 }}y{{ else }}ies{{ end }}">{{ len . }} new countr{{ if eq (len .) 1 }}y{{ else }}ies{{ end }}</summary>
+        <div class="stat-country-links">
+        {{- range . }}
+          <button type="button" data-country="{{ . }}" data-country-year="{{ $year }}" aria-pressed="false"{{ if site.Params.mapEnabled }} data-show-map{{ end }} aria-label="{{ . }} · {{ $year }}: {{ if site.Params.mapEnabled }}show on map{{ else }}show books{{ end }}">{{ . }}</button>
+        {{- end }}
+        </div>
+      </details>
+      {{- end }}
+    </li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}
+<section class="stats-section" aria-labelledby="stats-country-coverage-title">
+  <h3 id="stats-country-coverage-title">Cumulative country coverage</h3>
+  <p class="stat-note">Distinct author countries recorded through each year.{{ if site.Params.mapEnabled }} Select a country under its first appearance to show its books and open the map.{{ else }} Select a country under its first appearance to show its books.{{ end }}</p>
+  <ol class="stat-columns stat-country-coverage">
+  {{- range $coverageHistory }}
+    <li><button type="button" class="stat-column" data-year-id="{{ .id }}" aria-pressed="false" aria-label="{{ .year }}: {{ .total }} countr{{ if eq .total 1 }}y{{ else }}ies{{ end }} recorded so far" data-tip-value="{{ .total }} countr{{ if eq .total 1 }}y{{ else }}ies{{ end }}" data-tip-label="{{ .year }}" data-tip-detail="{{ .detail | jsonify }}"><span class="stat-column-track"><span class="stat-value">{{ .total }}</span><span class="stat-fill" style="--pct: {{ div (float .total) (len $countries) }}"></span></span><span class="stat-label">{{ .label }}</span></button></li>
+  {{- end }}
+  </ol>
+  {{- with $previousCountries }}
+  <details class="stat-country-discoveries">
+    <summary>{{ len . }} countr{{ if eq (len .) 1 }}y{{ else }}ies{{ end }} recorded earlier</summary>
+    <div class="stat-country-links">
+    {{- range $country, $_ := . }}
+      <button type="button" data-country="{{ $country }}" data-country-year="previously" aria-pressed="false"{{ if site.Params.mapEnabled }} data-show-map{{ end }} aria-label="{{ $country }} · Previously…: {{ if site.Params.mapEnabled }}show on map{{ else }}show books{{ end }}">{{ $country }}</button>
+    {{- end }}
+    </div>
+  </details>
+  {{- end }}
+</section>
+{{- end }}
+{{- if $years }}
 <section class="stats-section" aria-labelledby="stats-years-title">
   <h3 id="stats-years-title">Books per year</h3>
   <ol class="stat-columns">
