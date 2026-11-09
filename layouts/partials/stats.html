@@ -49,6 +49,30 @@
   {{- $years = $years | append $year -}}
 {{- end -}}
 {{- $years = sort $years -}}
+{{- $yearAuthorsByYear := dict -}}
+{{- $yearSummaries := slice -}}
+{{- range sort $years "value" "desc" -}}
+  {{- $year := . -}}
+  {{- $yearAuthors := dict -}}
+  {{- range $key, $author := $authors -}}
+    {{- with index $author.years $year -}}
+      {{- $yearAuthors = merge $yearAuthors (dict $key (dict "name" $author.name "count" (len .) "years" (dict $year .))) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $yearAuthorsByYear = merge $yearAuthorsByYear (dict $year $yearAuthors) -}}
+  {{- $best := 0 -}}
+  {{- $leaders := slice -}}
+  {{- range sort (sort $yearAuthors "name" "asc") "count" "desc" -}}
+    {{- if gt .count $best -}}
+      {{- $best = .count -}}
+      {{- $leaders = slice . -}}
+    {{- else if eq .count $best -}}
+      {{- $leaders = $leaders | append . -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $books := index $yearCounts $year -}}
+  {{- $yearSummaries = $yearSummaries | append (dict "year" $year "books" $books "authors" (len $yearAuthors) "countries" (len (index $countryYears $year | default dict)) "leaders" $leaders "best" $best "share" (math.Round (div (mul 100.0 $best) $books))) -}}
+{{- end -}}
 {{- $maxYear := 1 -}}
 {{- range $yearCounts -}}
   {{- $maxYear = math.Max $maxYear . -}}
@@ -72,20 +96,55 @@
   <span data-filter-summary></span>
   <button type="button" data-clear-filter>Clear filters</button>
 </div>
+{{- with $yearSummaries }}
+<section class="stats-section" aria-labelledby="stats-summary-title">
+  <h3 id="stats-summary-title">Year summaries</h3>
+  <p class="stat-note" id="stats-summary-note">Countries use available author data. Top-author share counts books credited to that author, including coauthored books, as a percentage of the year’s books.</p>
+  <div class="stat-summary-wrap">
+  <table class="stat-year-summaries" aria-labelledby="stats-summary-title" aria-describedby="stats-summary-note">
+    <thead><tr><th scope="col">Year</th><th scope="col">Books</th><th scope="col">Authors</th><th scope="col">Countries</th><th scope="col">Most-read author</th></tr></thead>
+    <tbody>
+    {{- range . }}
+      {{- $year := .year }}
+      <tr>
+        <th scope="row"><button type="button" class="stat-year" data-year-id="{{ $year }}" aria-pressed="false" aria-label="Show books from {{ $year }}">{{ $year }}</button></th>
+        <td>{{ .books }}</td><td>{{ .authors }}</td><td>{{ .countries }}</td>
+        <td>
+        {{- if .leaders }}
+          {{- if gt (len .leaders) 1 }}
+          <details class="stat-summary-ties">
+            <summary>{{ len .leaders }} tied</summary>
+            <div class="stat-summary-authors">
+            {{- range .leaders }}
+              <button type="button" class="stat-summary-author" data-author="{{ lower .name }}" data-name="{{ .name }}" data-author-year="{{ $year }}" aria-pressed="false" aria-label="Show {{ .name | replaceRE "'" "’" }}’s books from {{ $year }}">{{ .name | replaceRE "'" "’" }}</button>
+            {{- end }}
+            </div>
+          </details>
+          {{- else }}
+            {{- range .leaders }}
+          <button type="button" class="stat-summary-author" data-author="{{ lower .name }}" data-name="{{ .name }}" data-author-year="{{ $year }}" aria-pressed="false" aria-label="Show {{ .name | replaceRE "'" "’" }}’s books from {{ $year }}">{{ .name | replaceRE "'" "’" }}</button>
+            {{- end }}
+          {{- end }}
+          <span class="stat-summary-share">{{ .best }} of {{ .books }} book{{ if ne .books 1 }}s{{ end }} · {{ .share }}%{{ if gt (len .leaders) 1 }} each{{ end }}</span>
+        {{- else }}
+          <span class="stat-note">None recorded</span>
+        {{- end }}
+        </td>
+      </tr>
+    {{- end }}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{- end }}
 <div id="stats-rankings">
   <div data-stats-scope="all">
     {{- partial "stats-rankings.html" (dict "authors" $authors "countries" $countries "topN" $topN "scope" "all") }}
   </div>
   {{- range $years }}
     {{- $year := . }}
-    {{- $yearAuthors := dict }}
-    {{- range $key, $author := $authors }}
-      {{- with index $author.years $year }}
-        {{- $yearAuthors = merge $yearAuthors (dict $key (dict "name" $author.name "count" (len .) "years" (dict $year .))) }}
-      {{- end }}
-    {{- end }}
   <div data-stats-scope="{{ $year }}" hidden>
-    {{- partial "stats-rankings.html" (dict "authors" $yearAuthors "countries" (index $countryYears $year | default dict) "topN" $topN "scope" $year) }}
+    {{- partial "stats-rankings.html" (dict "authors" (index $yearAuthorsByYear $year) "countries" (index $countryYears $year | default dict) "topN" $topN "scope" $year) }}
   </div>
   {{- end }}
 </div>

@@ -142,6 +142,59 @@ html, body {
   line-height: 1.5;
   margin: 0 0 0.6em;
 }
+.stat-summary-wrap {
+  overflow-x: auto;
+}
+.stat-year-summaries {
+  display: table;
+  width: 100%;
+  margin: 0;
+}
+.stat-year-summaries tbody {
+  border: none;
+}
+.stat-year-summaries th,
+.stat-year-summaries td {
+  padding: 0.5em 0.6em;
+  border-top: none;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: top;
+  text-align: right;
+}
+.stat-year-summaries th {
+  color: var(--color-muted);
+  font-weight: normal;
+}
+.stat-year-summaries tr > :first-child,
+.stat-year-summaries tr > :last-child {
+  text-align: left;
+}
+.stat-year-summaries .stat-year {
+  font-size: inherit;
+  text-align: left;
+}
+.stat-year-summaries .stat-summary-author {
+  max-width: 100%;
+  color: var(--color-author);
+  overflow-wrap: anywhere;
+}
+.stat-summary-ties summary {
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stat-summary-authors {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3em;
+  margin-top: 0.4em;
+}
+.stat-summary-share {
+  display: block;
+  margin-top: 0.25em;
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
 .stat-legend {
   display: flex;
   gap: 1em;
@@ -213,6 +266,7 @@ html, body {
 .stat-column,
 .stat-row-label,
 .stat-year,
+.stat-summary-author,
 .stat-heat-cell {
   font: inherit;
   color: inherit;
@@ -255,12 +309,14 @@ html, body {
 .stat-bar:hover .stat-label,
 .stat-column:hover .stat-label,
 .stat-row-label:hover,
+.stat-summary-author:hover,
 .stat-year:hover {
   text-decoration: underline;
 }
 .stat-bar[aria-pressed="true"] .stat-label,
 .stat-column[aria-pressed="true"] .stat-label,
 .stat-row-label[aria-pressed="true"],
+.stat-summary-author[aria-pressed="true"],
 .stat-year[aria-pressed="true"] {
   color: var(--color-accent);
   font-weight: bold;
@@ -413,6 +469,8 @@ html, body {
 .filter-status button:focus-visible,
 .stat-country-links button:focus-visible,
 .stat-country-discoveries summary:focus-visible,
+.stat-summary-author:focus-visible,
+.stat-summary-ties summary:focus-visible,
 .stats-scope-control select:focus-visible,
 .panel-tab:focus-visible {
   outline: 2px solid var(--color-accent);
