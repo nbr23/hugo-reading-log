@@ -3,6 +3,7 @@
 {{- $topN := site.Params.statsTopAuthors | default 15 -}}
 {{- $authors := dict -}}
 {{- $countries := dict -}}
+{{- $countryYears := dict -}}
 {{- $yearCounts := dict -}}
 {{- range $year, $books := $data -}}
   {{- $isYear := ne $year "Previously…" -}}
@@ -28,13 +29,18 @@
       {{- range $country, $countryAuthors := $bookCountries -}}
         {{- $prev := index $countries $country | default (dict "count" 0 "authors" dict) -}}
         {{- $countries = merge $countries (dict $country (dict "name" $country "count" (add $prev.count 1) "authors" (merge $prev.authors $countryAuthors))) -}}
+        {{- if $isYear -}}
+          {{- $yearCountries := index $countryYears $year | default dict -}}
+          {{- $prevYear := index $yearCountries $country | default (dict "count" 0 "authors" dict) -}}
+          {{- $yearCountries = merge $yearCountries (dict $country (dict "name" $country "count" (add $prevYear.count 1) "authors" (merge $prevYear.authors $countryAuthors))) -}}
+          {{- $countryYears = merge $countryYears (dict $year $yearCountries) -}}
+        {{- end -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- $byCount := sort (sort $authors "name" "asc") "count" "desc" -}}
 {{- $topAuthors := first $topN $byCount -}}
-{{- $topCountries := first 15 (sort (sort $countries "name" "asc") "count" "desc") -}}
 {{- $years := slice -}}
 {{- range $year, $_ := $yearCounts -}}
   {{- $years = $years | append $year -}}
@@ -50,39 +56,34 @@
     {{- $maxHeat = math.Max $maxHeat (len .) -}}
   {{- end -}}
 {{- end }}
-{{- with $topAuthors }}
-<section class="stats-section" aria-labelledby="stats-authors-title">
-  <h3 id="stats-authors-title">Most-read authors</h3>
-  <ol class="stat-bars">
-  {{- $max := (index . 0).count }}
-  {{- range . }}
-    {{- $authorYears := slice }}
-    {{- $inYears := 0 }}
-    {{- range $year, $titles := .years }}
-      {{- $authorYears = $authorYears | append $year }}
-      {{- $inYears = add $inYears (len $titles) }}
+<div class="stats-scope-control">
+  <label for="stats-scope">Reading period</label>
+  <select id="stats-scope" aria-controls="stats-rankings">
+    <option value="all">All time</option>
+    {{- range sort $years "value" "desc" }}
+    <option value="{{ . }}">{{ . }}</option>
     {{- end }}
-    {{- $authorYears = sort $authorYears }}
-    {{- $detail := slice }}
-    {{- with $authorYears }}
-      {{- if eq (len .) 2 }}
-        {{- $detail = $detail | append (printf "In %s and %s" (index . 0) (index . 1)) }}
-      {{- else if gt (len .) 2 }}
-        {{- $detail = $detail | append (printf "%s–%s, %d different years" (index . 0) (index . (sub (len .) 1)) (len .)) }}
-      {{- else }}
-        {{- $detail = $detail | append (printf "All in %s" (index . 0)) }}
+  </select>
+</div>
+<div id="stats-rankings">
+  <div data-stats-scope="all">
+    {{- partial "stats-rankings.html" (dict "authors" $authors "countries" $countries "topN" $topN "scope" "all") }}
+  </div>
+  {{- range $years }}
+    {{- $year := . }}
+    {{- $yearAuthors := dict }}
+    {{- range $key, $author := $authors }}
+      {{- with index $author.years $year }}
+        {{- $yearAuthors = merge $yearAuthors (dict $key (dict "name" $author.name "count" (len .) "years" (dict $year .))) }}
       {{- end }}
     {{- end }}
-    {{- with sub .count $inYears }}
-      {{- $detail = $detail | append (printf "+ %d previously" .) }}
-    {{- end }}
-    <li><button type="button" class="stat-bar" data-author="{{ lower .name }}" data-name="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-value="{{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-label="{{ .name | replaceRE "'" "’" }}" data-tip-detail="{{ $detail | jsonify }}"><span class="stat-label">{{ .name | replaceRE "'" "’" }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+  <div data-stats-scope="{{ $year }}" hidden>
+    {{- partial "stats-rankings.html" (dict "authors" $yearAuthors "countries" (index $countryYears $year | default dict) "topN" $topN "scope" $year) }}
+  </div>
   {{- end }}
-  </ol>
-</section>
-{{- end }}
+</div>
 {{- if and $years $topAuthors }}
-<section class="stats-section" aria-labelledby="stats-heatmap-title">
+<section class="stats-section" data-stats-history aria-labelledby="stats-heatmap-title">
   <h3 id="stats-heatmap-title">Most-read authors by year</h3>
   <div class="stat-heatmap-wrap">
   <table class="stat-heatmap">
@@ -106,6 +107,42 @@
 </section>
 {{- end }}
 {{- if $years }}
+{{- $discoveries := dict }}
+{{- $maxAuthors := 1 }}
+{{- range $years }}
+  {{- $year := . }}
+  {{- $new := 0 }}
+  {{- $returning := 0 }}
+  {{- range $authors }}
+    {{- if index .years $year }}
+      {{- $authorYears := slice }}
+      {{- $datedCount := 0 }}
+      {{- range $authorYear, $titles := .years }}
+        {{- $authorYears = $authorYears | append $authorYear }}
+        {{- $datedCount = add $datedCount (len $titles) }}
+      {{- end }}
+      {{- if and (eq .count $datedCount) (eq $year (index (sort $authorYears) 0)) }}
+        {{- $new = add $new 1 }}
+      {{- else }}
+        {{- $returning = add $returning 1 }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- $discoveries = merge $discoveries (dict $year (dict "new" $new "returning" $returning)) }}
+  {{- $maxAuthors = math.Max $maxAuthors (add $new $returning) }}
+{{- end }}
+<section class="stats-section" aria-labelledby="stats-discovery-title">
+  <h3 id="stats-discovery-title">New vs returning authors by year</h3>
+  <p class="stat-note">Each author counts once per year. New means their first appearance in this log; authors in “Previously…” count as returning.</p>
+  <div class="stat-legend"><span><i class="stat-new" aria-hidden="true"></i>New</span><span><i class="stat-returning" aria-hidden="true"></i>Returning</span></div>
+  <ol class="stat-bars">
+  {{- range $years }}
+    {{- $counts := index $discoveries . }}
+    {{- $total := add $counts.new $counts.returning }}
+    <li><button type="button" class="stat-bar stat-discovery" data-year-id="{{ . }}" aria-pressed="false" aria-label="{{ . }}: {{ $counts.new }} new, {{ $counts.returning }} returning authors" data-tip-value="{{ $total }} author{{ if ne $total 1 }}s{{ end }}" data-tip-label="{{ . }}" data-tip-detail="{{ slice (printf "%d new" $counts.new) (printf "%d returning" $counts.returning) | jsonify }}"><span class="stat-label">{{ . }}</span><span class="stat-track"><span class="stat-stack" style="--pct: {{ div (float $total) $maxAuthors }}"><span class="stat-new" style="flex: {{ $counts.new }}"></span><span class="stat-returning" style="flex: {{ $counts.returning }}"></span></span><span class="stat-value">{{ $total }}</span></span></button></li>
+  {{- end }}
+  </ol>
+</section>
 <section class="stats-section" aria-labelledby="stats-years-title">
   <h3 id="stats-years-title">Books per year</h3>
   <ol class="stat-columns">
@@ -127,19 +164,7 @@
     {{- if ge $best 2 }}
       {{- $detail = slice (printf "Most read: %s (%d)" (delimit (first 3 $leaders) ", ") $best) }}
     {{- end }}
-    <li><button type="button" class="stat-column" data-year-id="{{ $year | lower | replaceRE `…` `` | replaceRE `\s` `-` }}" aria-label="{{ $year }}: {{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-value="{{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-label="{{ $year }}" data-tip-detail="{{ $detail | jsonify }}"><span class="stat-column-track"><span class="stat-value">{{ $n }}</span><span class="stat-fill" style="--pct: {{ div (float $n) $maxYear }}"></span></span><span class="stat-label">{{ $year }}</span></button></li>
-  {{- end }}
-  </ol>
-</section>
-{{- end }}
-{{- with $topCountries }}
-<section class="stats-section" aria-labelledby="stats-countries-title">
-  <h3 id="stats-countries-title">Top author countries</h3>
-  <ol class="stat-bars">
-  {{- $max := (index . 0).count }}
-  {{- range . }}
-    {{- $nAuthors := len .authors }}
-    <li><button type="button" class="stat-bar" data-country="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-value="{{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-label="{{ .name }}" data-tip-detail="{{ slice (printf "%d author%s" $nAuthors (cond (eq $nAuthors 1) "" "s")) | jsonify }}"><span class="stat-label">{{ .name }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+    <li><button type="button" class="stat-column" data-year-id="{{ $year | lower | replaceRE `…` `` | replaceRE `\s` `-` }}" aria-pressed="false" aria-label="{{ $year }}: {{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-value="{{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-label="{{ $year }}" data-tip-detail="{{ $detail | jsonify }}"><span class="stat-column-track"><span class="stat-value">{{ $n }}</span><span class="stat-fill" style="--pct: {{ div (float $n) $maxYear }}"></span></span><span class="stat-label">{{ $year }}</span></button></li>
   {{- end }}
   </ol>
 </section>

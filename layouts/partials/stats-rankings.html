@@ -1,0 +1,46 @@
+{{- $scope := .scope -}}
+{{- $topAuthors := first .topN (sort (sort .authors "name" "asc") "count" "desc") -}}
+{{- $topCountries := first 15 (sort (sort .countries "name" "asc") "count" "desc") -}}
+{{- with $topAuthors }}
+<section class="stats-section" aria-labelledby="stats-authors-{{ $scope }}-title">
+  <h3 id="stats-authors-{{ $scope }}-title">Most-read authors{{ if ne $scope "all" }} · {{ $scope }}{{ end }}</h3>
+  <ol class="stat-bars">
+  {{- $max := (index . 0).count }}
+  {{- range . }}
+    {{- $authorYears := slice }}
+    {{- $inYears := 0 }}
+    {{- range $year, $titles := .years }}
+      {{- $authorYears = $authorYears | append $year }}
+      {{- $inYears = add $inYears (len $titles) }}
+    {{- end }}
+    {{- $authorYears = sort $authorYears }}
+    {{- $detail := slice }}
+    {{- with $authorYears }}
+      {{- if eq (len .) 2 }}
+        {{- $detail = $detail | append (printf "In %s and %s" (index . 0) (index . 1)) }}
+      {{- else if gt (len .) 2 }}
+        {{- $detail = $detail | append (printf "%s–%s, %d different years" (index . 0) (index . (sub (len .) 1)) (len .)) }}
+      {{- else }}
+        {{- $detail = $detail | append (printf "All in %s" (index . 0)) }}
+      {{- end }}
+    {{- end }}
+    {{- with sub .count $inYears }}
+      {{- $detail = $detail | append (printf "+ %d previously" .) }}
+    {{- end }}
+    <li><button type="button" class="stat-bar" data-author="{{ lower .name }}" data-name="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-value="{{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-label="{{ .name | replaceRE "'" "’" }}" data-tip-detail="{{ $detail | jsonify }}"><span class="stat-label">{{ .name | replaceRE "'" "’" }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}
+{{- with $topCountries }}
+<section class="stats-section" aria-labelledby="stats-countries-{{ $scope }}-title">
+  <h3 id="stats-countries-{{ $scope }}-title">Top author countries{{ if ne $scope "all" }} · {{ $scope }}{{ end }}</h3>
+  <ol class="stat-bars">
+  {{- $max := (index . 0).count }}
+  {{- range . }}
+    {{- $nAuthors := len .authors }}
+    <li><button type="button" class="stat-bar" data-country="{{ .name }}" aria-label="{{ .name }}: {{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-value="{{ .count }} book{{ if ne .count 1 }}s{{ end }}" data-tip-label="{{ .name }}" data-tip-detail="{{ slice (printf "%d author%s" $nAuthors (cond (eq $nAuthors 1) "" "s")) | jsonify }}"><span class="stat-label">{{ .name }}</span><span class="stat-track"><span class="stat-fill" style="--pct: {{ div (float .count) $max }}"></span><span class="stat-value">{{ .count }}</span></span></button></li>
+  {{- end }}
+  </ol>
+</section>
+{{- end }}

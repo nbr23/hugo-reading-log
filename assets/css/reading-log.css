@@ -82,6 +82,21 @@ html, body {
   padding: 10px 30px 30px;
   font-size: 0.9em;
 }
+.stats-scope-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin-top: 1em;
+}
+.stats-scope-control select {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.3em 0.6em;
+}
 .stats-section {
   max-width: 720px;
 }
@@ -89,6 +104,42 @@ html, body {
   font-size: 1em;
   color: var(--color-heading);
   margin: 1.6em 0 0.6em;
+}
+.stat-note {
+  color: var(--color-muted);
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 0 0 0.6em;
+}
+.stat-legend {
+  display: flex;
+  gap: 1em;
+  margin-bottom: 0.6em;
+  color: var(--color-muted);
+  font-size: 0.85em;
+}
+.stat-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.stat-legend i {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 2px;
+}
+.stat-new {
+  background: var(--color-accent);
+}
+.stat-returning {
+  background: var(--color-muted);
+}
+.stat-stack {
+  display: flex;
+  width: calc((100% - 2.5em) * var(--pct));
+  height: 14px;
+  overflow: hidden;
+  border-radius: 0 4px 4px 0;
 }
 .stat-bars,
 .stat-columns {
@@ -143,6 +194,12 @@ html, body {
 .stat-row-label:hover,
 .stat-year:hover {
   text-decoration: underline;
+}
+.stat-bar[aria-pressed="true"] .stat-label,
+.stat-column[aria-pressed="true"] .stat-label,
+.stat-year[aria-pressed="true"] {
+  color: var(--color-accent);
+  font-weight: bold;
 }
 .stat-columns {
   --column-height: 120px;
@@ -280,6 +337,7 @@ html, body {
 .stat-column:focus-visible,
 .stat-row-label:focus-visible,
 .stat-year:focus-visible,
+.stats-scope-control select:focus-visible,
 .panel-tab:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;

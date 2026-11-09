@@ -40,6 +40,28 @@ document.addEventListener('DOMContentLoaded', function() {
   var activeCountry = null;
   var activeYear = null;
   var mapIframe = document.querySelector('#map-panel iframe');
+  var statsScope = document.getElementById('stats-scope');
+
+  function setStatsScope(scope) {
+    if (!statsScope) return;
+    statsScope.value = scope;
+    if (!statsScope.value) statsScope.value = 'all';
+    scope = statsScope.value;
+    hideTooltip();
+    document.querySelectorAll('[data-stats-scope]').forEach(function(el) {
+      el.hidden = el.getAttribute('data-stats-scope') !== scope;
+    });
+    document.querySelectorAll('[data-stats-history]').forEach(function(el) {
+      el.hidden = scope !== 'all';
+    });
+    document.querySelectorAll('#panel-stats [data-year-id]').forEach(function(el) {
+      el.setAttribute('aria-pressed', String(el.getAttribute('data-year-id') === scope));
+    });
+  }
+
+  function statsYear() {
+    return statsScope && statsScope.value !== 'all' ? document.getElementById(statsScope.value) : null;
+  }
 
   function sendToMap(msg) {
     if (mapIframe && mapIframe.contentWindow) {
@@ -69,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.book-list h2').forEach(function(h2) {
       h2.classList.remove('filtered-out', 'year-active');
     });
+    setStatsScope('all');
     if (!fromMessage) {
       sendToMap({ type: 'clear' });
     }
@@ -76,11 +99,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function filterByYear(h2) {
     clearFilter(true);
-    activeYear = h2;
-
     var ul = h2.nextElementSibling;
     if (!ul || ul.tagName !== 'UL') return;
 
+    applyYearFilter(h2);
+
+    var authors = Array.prototype.map.call(ul.querySelectorAll('.author'), function(el) {
+      return el.textContent;
+    });
+
+    sendToMap({ type: 'filterAuthors', authors: authors });
+  }
+
+  function applyYearFilter(h2) {
+    activeYear = h2;
+    setStatsScope(h2.id);
     document.querySelectorAll('.book-list h2').forEach(function(other) {
       if (other === h2) return;
       other.classList.add('filtered-out');
@@ -93,12 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
     h2.classList.add('year-active');
     var yearToggle = h2.querySelector('.year-toggle');
     if (yearToggle) yearToggle.setAttribute('aria-pressed', 'true');
-
-    var authors = Array.prototype.map.call(ul.querySelectorAll('.author'), function(el) {
-      return el.textContent;
-    });
-
-    sendToMap({ type: 'filterAuthors', authors: authors });
   }
 
   function hideNonMatchingBooks(authorKeys) {
@@ -156,21 +183,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function filterByAuthor(authorName, fromMessage) {
+  function filterByAuthor(authorName, fromMessage, year) {
     var author = authorName.toLowerCase();
     clearFilter(true);
     activeAuthor = author;
 
-    var matches = document.querySelectorAll('.author[data-author="' + author + '"]');
+    var root = year ? year.nextElementSibling : document;
+    var matches = root.querySelectorAll('.author[data-author="' + author + '"]');
     decorateAuthors(matches, authorName);
     hideNonMatchingBooks([author]);
+    if (year) applyYearFilter(year);
 
     if (!fromMessage) {
       sendToMap({ type: 'filterAuthor', author: authorName });
     }
   }
 
-  function filterByCountry(country, fromMessage) {
+  function filterByCountry(country, fromMessage, year) {
     clearFilter(true);
     activeCountry = country;
 
@@ -182,14 +211,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
+    var root = year ? year.nextElementSibling : document;
     matchingKeys.forEach(function(key) {
-      document.querySelectorAll('.author[data-author="' + key + '"]').forEach(function(a) {
+      root.querySelectorAll('.author[data-author="' + key + '"]').forEach(function(a) {
         a.classList.add('highlighted');
         a.setAttribute('aria-pressed', 'true');
       });
     });
 
     hideNonMatchingBooks(matchingKeys);
+    if (year) applyYearFilter(year);
 
     if (!fromMessage) {
       sendToMap({ type: 'filterCountry', country: country });
@@ -232,6 +263,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  if (statsScope) {
+    statsScope.parentElement.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    statsScope.addEventListener('change', function() {
+      var year = statsYear();
+      if (year) {
+        filterByYear(year);
+      } else {
+        clearFilter();
+      }
+    });
+  }
+
   document.querySelectorAll('#panel-stats [data-author]').forEach(function(el) {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -239,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearFilter();
         return;
       }
-      filterByAuthor(this.getAttribute('data-name'), false);
+      filterByAuthor(this.getAttribute('data-name'), false, statsYear());
     });
   });
 
@@ -263,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (activeCountry === country) {
         clearFilter();
       } else {
-        filterByCountry(country, false);
+        filterByCountry(country, false, statsYear());
       }
     });
   });
@@ -333,6 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     el.addEventListener('click', function(e) {
       e.stopPropagation();
+      if (el.closest('[hidden]')) return;
       if (tooltipPinned && tooltipTarget === el) {
         hideTooltip();
         return;
