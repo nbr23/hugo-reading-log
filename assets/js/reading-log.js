@@ -43,6 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
   var mapIframe = document.querySelector('#map-panel iframe');
   var statsScope = document.getElementById('stats-scope');
 
+  function canonicalAuthor(name) {
+    return (typeof authorNames !== 'undefined' && authorNames[name.toLowerCase()]) || name;
+  }
+
+  function mapAuthorNames(name) {
+    name = canonicalAuthor(name);
+    return (typeof authorMapNames !== 'undefined' && authorMapNames[name.toLowerCase()]) || [name];
+  }
+
   function setStatsScope(scope) {
     if (!statsScope) return;
     statsScope.value = scope;
@@ -135,8 +144,11 @@ document.addEventListener('DOMContentLoaded', function() {
     applyYearFilter(h2);
     updateFilterState();
 
-    var authors = Array.prototype.map.call(ul.querySelectorAll('.author'), function(el) {
-      return el.textContent;
+    var authors = [];
+    ul.querySelectorAll('.author').forEach(function(el) {
+      mapAuthorNames(el.getAttribute('data-name')).forEach(function(name) {
+        if (authors.indexOf(name) === -1) authors.push(name);
+      });
     });
 
     sendToMap({ type: 'filterAuthors', authors: authors });
@@ -161,14 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function hideNonMatchingBooks(authorKeys) {
     document.querySelectorAll('.book-list > ul > li').forEach(function(li) {
-      var found = false;
-      for (var i = 0; i < authorKeys.length; i++) {
-        if (li.querySelector('.author[data-author="' + authorKeys[i] + '"]')) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
+      if (!matchingAuthors(li, authorKeys).length) {
         li.classList.add('filtered-out');
       }
     });
@@ -179,6 +184,12 @@ document.addEventListener('DOMContentLoaded', function() {
           h2.classList.add('filtered-out');
         }
       }
+    });
+  }
+
+  function matchingAuthors(root, authorKeys) {
+    return Array.prototype.filter.call(root.querySelectorAll('.author'), function(el) {
+      return authorKeys.indexOf(el.getAttribute('data-author')) !== -1;
     });
   }
 
@@ -215,13 +226,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function filterByAuthor(authorName, fromMessage, year) {
+    authorName = canonicalAuthor(authorName);
     var author = authorName.toLowerCase();
     resetFilter();
     activeAuthor = author;
     activeAuthorName = authorName;
 
     var root = year ? year.nextElementSibling : document;
-    var matches = root.querySelectorAll('.author[data-author="' + author + '"]');
+    var matches = matchingAuthors(root, [author]);
     decorateAuthors(matches, authorName);
     hideNonMatchingBooks([author]);
     if (year) {
@@ -232,7 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
     updateFilterState();
 
     if (!fromMessage) {
-      sendToMap({ type: 'filterAuthor', author: authorName });
+      var names = mapAuthorNames(authorName);
+      sendToMap(names.length === 1 ? { type: 'filterAuthor', author: names[0] } : { type: 'filterAuthors', authors: names });
     }
   }
 
@@ -249,11 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var root = year ? year.nextElementSibling : document;
-    matchingKeys.forEach(function(key) {
-      root.querySelectorAll('.author[data-author="' + key + '"]').forEach(function(a) {
-        a.classList.add('highlighted');
-        a.setAttribute('aria-pressed', 'true');
-      });
+    matchingAuthors(root, matchingKeys).forEach(function(a) {
+      a.classList.add('highlighted');
+      a.setAttribute('aria-pressed', 'true');
     });
 
     hideNonMatchingBooks(matchingKeys);
@@ -277,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearFilter();
         return;
       }
-      filterByAuthor(this.textContent, false);
+      filterByAuthor(this.getAttribute('data-name'), false);
     });
   });
 

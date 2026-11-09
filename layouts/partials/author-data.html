@@ -1,0 +1,71 @@
+{{- $targets := dict -}}
+{{- range $alias, $name := hugo.Data.author_aliases -}}
+  {{- if ne (printf "%T" $name) "string" -}}
+    {{- errorf "Author alias %q must map to a name" $alias -}}
+  {{- else -}}
+    {{- $key := lower (strings.TrimSpace $alias) -}}
+    {{- $name = strings.TrimSpace $name -}}
+    {{- if or (not $key) (not $name) -}}
+      {{- errorf "Author aliases must have nonempty names" -}}
+    {{- else -}}
+      {{- $targets = merge $targets (dict $key $name) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $names := dict -}}
+{{- range $alias, $target := $targets -}}
+  {{- $name := $target -}}
+  {{- $seen := dict $alias true -}}
+  {{- range seq (len $targets) -}}
+    {{- $key := lower $name -}}
+    {{- $next := index $targets $key -}}
+    {{- if not $next -}}
+      {{- break -}}
+    {{- end -}}
+    {{- if eq (lower $next) $key -}}
+      {{- $name = $next -}}
+      {{- break -}}
+    {{- end -}}
+    {{- if isset $seen $key -}}
+      {{- errorf "Author alias cycle involving %q" $alias -}}
+      {{- break -}}
+    {{- end -}}
+    {{- $seen = merge $seen (dict $key true) -}}
+    {{- $name = $next -}}
+  {{- end -}}
+  {{- $names = merge $names (dict $alias $name (lower $name) $name) -}}
+{{- end -}}
+{{- range $name, $_ := hugo.Data.authors_cache -}}
+  {{- if not (isset $names (lower $name)) -}}
+    {{- $names = merge $names (dict (lower $name) $name) -}}
+  {{- end -}}
+{{- end -}}
+{{- range hugo.Data.reading_log -}}
+  {{- range . -}}
+    {{- if not .hidden -}}
+      {{- range .authors -}}
+        {{- if not (isset $names (lower .)) -}}
+          {{- $names = merge $names (dict (lower .) .) -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $countries := dict -}}
+{{- range $source, $list := hugo.Data.authors_cache -}}
+  {{- $name := index $names (lower $source) -}}
+  {{- $countries = merge $countries (dict $name (union (index $countries $name | default slice) ($list | default slice))) -}}
+{{- end -}}
+{{- $mapNames := dict -}}
+{{- range hugo.Data.reading_log -}}
+  {{- range . -}}
+    {{- if not .hidden -}}
+      {{- range .authors -}}
+        {{- $name := index $names (lower .) -}}
+        {{- $key := lower $name -}}
+        {{- $mapNames = merge $mapNames (dict $key (union (index $mapNames $key | default slice) (slice $name .))) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- return (dict "names" $names "countries" $countries "mapNames" $mapNames) -}}

@@ -1,5 +1,6 @@
 {{- $data := hugo.Data.reading_log -}}
-{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $authorData := partialCached "author-data.html" . -}}
+{{- $authorCountries := $authorData.countries -}}
 {{- $topN := site.Params.statsTopAuthors | default 15 -}}
 {{- $authors := dict -}}
 {{- $countries := dict -}}
@@ -15,15 +16,21 @@
         {{- $yearCounts = merge $yearCounts (dict $year (add (index $yearCounts $year | default 0) 1)) -}}
       {{- end -}}
       {{- $bookCountries := dict -}}
+      {{- $bookAuthors := dict -}}
       {{- range .authors -}}
-        {{- $key := lower . -}}
-        {{- $entry := index $authors $key | default (dict "name" . "count" 0 "years" dict) -}}
+        {{- $name := index $authorData.names (lower .) -}}
+        {{- $key := lower $name -}}
+        {{- if isset $bookAuthors $key -}}
+          {{- continue -}}
+        {{- end -}}
+        {{- $bookAuthors = merge $bookAuthors (dict $key true) -}}
+        {{- $entry := index $authors $key | default (dict "name" $name "count" 0 "years" dict) -}}
         {{- $authorYears := $entry.years -}}
         {{- if $isYear -}}
           {{- $authorYears = merge $authorYears (dict $year ((index $authorYears $year | default slice) | append $title)) -}}
         {{- end -}}
         {{- $authors = merge $authors (dict $key (dict "name" $entry.name "count" (add $entry.count 1) "years" $authorYears)) -}}
-        {{- range index $authorCountries . -}}
+        {{- range index $authorCountries $name -}}
           {{- $bookCountries = merge $bookCountries (dict . (merge (index $bookCountries . | default dict) (dict $key true))) -}}
         {{- end -}}
       {{- end -}}

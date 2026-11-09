@@ -2,7 +2,8 @@
 <div class="container">
   <div class="book-list">
 {{- $data := hugo.Data.reading_log -}}
-{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $authorData := partialCached "author-data.html" . -}}
+{{- $authorCountries := $authorData.countries -}}
 {{- $totalBooks := 0 -}}
 {{- $authorsSeen := dict -}}
 {{- $countriesSeen := dict -}}
@@ -11,8 +12,9 @@
     {{- if not .hidden -}}
       {{- $totalBooks = add $totalBooks 1 -}}
       {{- range .authors -}}
-        {{- $authorsSeen = merge $authorsSeen (dict (lower .) true) -}}
-        {{- with index $authorCountries . -}}
+        {{- $name := index $authorData.names (lower .) -}}
+        {{- $authorsSeen = merge $authorsSeen (dict (lower $name) true) -}}
+        {{- with index $authorCountries $name -}}
           {{- range . -}}
             {{- $countriesSeen = merge $countriesSeen (dict . true) -}}
           {{- end -}}
@@ -64,7 +66,18 @@
       {{- else if le $rating -5 -}}
         {{- $ratingClass = " rating-low" -}}
       {{- end -}}
-<li{{ with $rating }} data-rating="{{ . }}"{{ end }}><span class="book-title{{ $ratingClass }}">{{ .title | replaceRE "'" "\u2019" }}</span>{{- if .authors }} - {{ range $i, $a := .authors }}{{- if $i }}, {{ end -}}<button type="button" class="author" data-author="{{ $a | lower }}" aria-pressed="false">{{ $a | replaceRE "'" "\u2019" }}</button>{{- end }}{{- end }}</li>
+<li{{ with $rating }} data-rating="{{ . }}"{{ end }}><span class="book-title{{ $ratingClass }}">{{ .title | replaceRE "'" "\u2019" }}</span>
+      {{- $bookAuthors := dict -}}
+      {{- range .authors -}}
+        {{- $name := index $authorData.names (lower .) -}}
+        {{- $key := lower $name -}}
+        {{- if not (isset $bookAuthors $key) -}}
+          {{- if $bookAuthors }}, {{ else }} - {{ end -}}
+<button type="button" class="author" data-author="{{ $key }}" data-name="{{ $name }}" aria-pressed="false">{{ . | replaceRE "'" "\u2019" }}</button>
+          {{- $bookAuthors = merge $bookAuthors (dict $key true) -}}
+        {{- end -}}
+      {{- end -}}
+</li>
     {{- end -}}
   {{- end }}
 </ul>
@@ -101,7 +114,8 @@
 {{- end }}
 
 {{ define "scripts" -}}
-{{- $authorCountries := hugo.Data.authors_cache -}}
+{{- $authorData := partialCached "author-data.html" . -}}
+{{- $authorCountries := $authorData.countries -}}
 {{- $iso := hugo.Data.iso3166 -}}
 {{- $countryToCode := dict -}}
 {{- $usedCountries := dict -}}
@@ -117,6 +131,8 @@
 {{- end }}
 <script>
 var authorCountries = {{ $authorCountries | jsonify | safeJS }};
+var authorNames = {{ $authorData.names | jsonify | safeJS }};
+var authorMapNames = {{ $authorData.mapNames | jsonify | safeJS }};
 var countryToCode = {{ $countryToCode | jsonify | safeJS }};
 </script>
 {{- $js := resources.Get "js/reading-log.js" }}
