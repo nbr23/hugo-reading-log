@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   var activeAuthor = null;
+  var activeAuthorName = null;
   var activeCountry = null;
   var activeYear = null;
   var mapIframe = document.querySelector('#map-panel iframe');
@@ -51,9 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-stats-scope]').forEach(function(el) {
       el.hidden = el.getAttribute('data-stats-scope') !== scope;
     });
-    document.querySelectorAll('[data-stats-history]').forEach(function(el) {
-      el.hidden = scope !== 'all';
-    });
     document.querySelectorAll('#panel-stats [data-year-id]').forEach(function(el) {
       el.setAttribute('aria-pressed', String(el.getAttribute('data-year-id') === scope));
     });
@@ -63,14 +61,39 @@ document.addEventListener('DOMContentLoaded', function() {
     return statsScope && statsScope.value !== 'all' ? document.getElementById(statsScope.value) : null;
   }
 
+  function updateFilterState() {
+    var parts = [];
+    if (activeAuthor) parts.push('Author: ' + activeAuthorName.replace(/'/g, '\u2019'));
+    if (activeCountry) parts.push('Country: ' + activeCountry);
+    if (activeYear) parts.push('Year: ' + activeYear.querySelector('.year-toggle').textContent);
+    var filtered = parts.length > 0;
+    if (filtered) {
+      var count = document.querySelectorAll('.book-list > ul:not(.filtered-out) > li:not(.filtered-out)').length;
+      parts.push(count + ' book' + (count !== 1 ? 's' : ''));
+    }
+    document.querySelectorAll('[data-filter-status]').forEach(function(el) {
+      el.hidden = !filtered;
+      el.querySelector('[data-filter-summary]').textContent = parts.join(' · ');
+    });
+    document.querySelectorAll('#panel-stats [data-author]').forEach(function(el) {
+      var year = el.getAttribute('data-author-year');
+      var selected = activeAuthor === el.getAttribute('data-author') && (!year || (activeYear && activeYear.id === year));
+      el.setAttribute('aria-pressed', String(Boolean(selected)));
+    });
+    document.querySelectorAll('#panel-stats [data-country]').forEach(function(el) {
+      el.setAttribute('aria-pressed', String(activeCountry === el.getAttribute('data-country')));
+    });
+  }
+
   function sendToMap(msg) {
     if (mapIframe && mapIframe.contentWindow) {
       mapIframe.contentWindow.postMessage(msg, '*');
     }
   }
 
-  function clearFilter(fromMessage) {
+  function resetFilter() {
     activeAuthor = null;
+    activeAuthorName = null;
     activeCountry = null;
     activeYear = null;
     document.querySelectorAll('.author.highlighted').forEach(function(a) {
@@ -91,18 +114,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.book-list h2').forEach(function(h2) {
       h2.classList.remove('filtered-out', 'year-active');
     });
+  }
+
+  function clearFilter(fromMessage) {
+    resetFilter();
     setStatsScope('all');
+    updateFilterState();
     if (!fromMessage) {
       sendToMap({ type: 'clear' });
     }
   }
 
   function filterByYear(h2) {
-    clearFilter(true);
+    resetFilter();
     var ul = h2.nextElementSibling;
     if (!ul || ul.tagName !== 'UL') return;
 
     applyYearFilter(h2);
+    updateFilterState();
 
     var authors = Array.prototype.map.call(ul.querySelectorAll('.author'), function(el) {
       return el.textContent;
@@ -185,14 +214,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function filterByAuthor(authorName, fromMessage, year) {
     var author = authorName.toLowerCase();
-    clearFilter(true);
+    resetFilter();
     activeAuthor = author;
+    activeAuthorName = authorName;
 
     var root = year ? year.nextElementSibling : document;
     var matches = root.querySelectorAll('.author[data-author="' + author + '"]');
     decorateAuthors(matches, authorName);
     hideNonMatchingBooks([author]);
-    if (year) applyYearFilter(year);
+    if (year) {
+      applyYearFilter(year);
+    } else {
+      setStatsScope('all');
+    }
+    updateFilterState();
 
     if (!fromMessage) {
       sendToMap({ type: 'filterAuthor', author: authorName });
@@ -200,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function filterByCountry(country, fromMessage, year) {
-    clearFilter(true);
+    resetFilter();
     activeCountry = country;
 
     var matchingKeys = [];
@@ -220,7 +255,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     hideNonMatchingBooks(matchingKeys);
-    if (year) applyYearFilter(year);
+    if (year) {
+      applyYearFilter(year);
+    } else {
+      setStatsScope('all');
+    }
+    updateFilterState();
 
     if (!fromMessage) {
       sendToMap({ type: 'filterCountry', country: country });
@@ -237,12 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       filterByAuthor(this.textContent, false);
     });
-  });
-
-  document.addEventListener('click', function() {
-    if (activeAuthor || activeCountry || activeYear) {
-      clearFilter();
-    }
   });
 
   document.addEventListener('keydown', function(e) {
@@ -263,6 +297,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  document.querySelectorAll('[data-clear-filter]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var target = this.closest('#panel-stats') ? statsScope : document.querySelector('.year-toggle');
+      clearFilter();
+      if (target) target.focus();
+    });
+  });
+
   if (statsScope) {
     statsScope.parentElement.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -280,11 +323,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('#panel-stats [data-author]').forEach(function(el) {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (activeAuthor === this.getAttribute('data-author')) {
+      var yearId = this.getAttribute('data-author-year');
+      var year = yearId ? document.getElementById(yearId) : statsYear();
+      if (activeAuthor === this.getAttribute('data-author') && activeYear === year) {
         clearFilter();
         return;
       }
-      filterByAuthor(this.getAttribute('data-name'), false, statsYear());
+      filterByAuthor(this.getAttribute('data-name'), false, year);
     });
   });
 
@@ -317,8 +362,9 @@ document.addEventListener('DOMContentLoaded', function() {
   var tooltipTarget = null;
   var tooltipPinned = false;
 
-  function setHeatAxes(cell, on) {
-    if (cell.tagName !== 'TD') return;
+  function setHeatAxes(el, on) {
+    var cell = el.closest('td');
+    if (!cell) return;
     var table = cell.closest('table');
     [cell.parentElement.cells[0], table.tHead.rows[0].cells[cell.cellIndex]].forEach(function(th) {
       if (th) th.classList.toggle('is-hover', on);
@@ -326,8 +372,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function showTooltip(el) {
-    if (tooltipTarget && tooltipTarget !== el) setHeatAxes(tooltipTarget, false);
+    if (tooltipTarget && tooltipTarget !== el) {
+      setHeatAxes(tooltipTarget, false);
+      tooltipTarget.removeAttribute('aria-describedby');
+    }
     tooltipTarget = el;
+    el.setAttribute('aria-describedby', tooltip.id);
     tooltip.textContent = '';
     var value = document.createElement('strong');
     value.textContent = el.getAttribute('data-tip-value');
@@ -359,7 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!tooltip || tooltip.hidden) return;
     tooltip.hidden = true;
     tooltipPinned = false;
-    if (tooltipTarget) setHeatAxes(tooltipTarget, false);
+    if (tooltipTarget) {
+      setHeatAxes(tooltipTarget, false);
+      tooltipTarget.removeAttribute('aria-describedby');
+    }
     tooltipTarget = null;
   }
 
@@ -371,10 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (e.pointerType === 'mouse' && !tooltipPinned) hideTooltip();
     });
     el.addEventListener('focus', function() {
-      if (!tooltipPinned) showTooltip(el);
+      tooltipPinned = false;
+      showTooltip(el);
     });
     el.addEventListener('blur', function() {
-      if (!tooltipPinned) hideTooltip();
+      hideTooltip();
     });
     el.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -438,4 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
       mapPanel.classList.remove('visible');
     });
   }
+
+  updateFilterState();
 });

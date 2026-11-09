@@ -33,6 +33,10 @@
       </div>
 {{- end }}
     </header>
+    <div class="filter-status" data-filter-status hidden>
+      <span data-filter-summary role="status"></span>
+      <button type="button" data-clear-filter>Clear filters</button>
+    </div>
 {{- $years := slice -}}
 {{- $hasPreviously := false -}}
 {{- range $year, $books := $data -}}

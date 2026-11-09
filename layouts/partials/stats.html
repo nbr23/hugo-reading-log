@@ -65,6 +65,10 @@
     {{- end }}
   </select>
 </div>
+<div class="filter-status" data-filter-status hidden>
+  <span data-filter-summary></span>
+  <button type="button" data-clear-filter>Clear filters</button>
+</div>
 <div id="stats-rankings">
   <div data-stats-scope="all">
     {{- partial "stats-rankings.html" (dict "authors" $authors "countries" $countries "topN" $topN "scope" "all") }}
@@ -83,8 +87,9 @@
   {{- end }}
 </div>
 {{- if and $years $topAuthors }}
-<section class="stats-section" data-stats-history aria-labelledby="stats-heatmap-title">
+<section class="stats-section" aria-labelledby="stats-heatmap-title">
   <h3 id="stats-heatmap-title">Most-read authors by year</h3>
+  <p class="stat-note">Select a cell to show that author’s books for the year.</p>
   <div class="stat-heatmap-wrap">
   <table class="stat-heatmap">
     <thead>
@@ -94,11 +99,11 @@
     <tbody>
     {{- range $topAuthors }}
       {{- $author := . }}
-      <tr><th scope="row"><button type="button" class="stat-row-label" data-author="{{ lower .name }}" data-name="{{ .name }}" data-label="{{ .name | replaceRE "'" "’" }}">{{ .name | replaceRE "'" "’" }}</button></th>
+      <tr><th scope="row"><button type="button" class="stat-row-label" data-author="{{ lower .name }}" data-name="{{ .name }}" data-label="{{ .name | replaceRE "'" "’" }}" aria-pressed="false">{{ .name | replaceRE "'" "’" }}</button></th>
       {{- range $years }}
         {{- $titles := index $author.years . | default slice }}
         {{- $n := len $titles }}
-        {{- if $n }}<td class="heat" style="--heat: {{ add 0.15 (mul 0.85 (div (float $n) $maxHeat)) }}" data-tip-value="{{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-label="{{ $author.name | replaceRE "'" "’" }} · {{ . }}" data-tip-detail="{{ $titles | jsonify }}"><span class="visually-hidden">{{ $n }}</span></td>{{ else }}<td><span class="visually-hidden">0</span></td>{{ end }}
+        {{- if $n }}<td class="heat" style="--heat: {{ add 0.15 (mul 0.85 (div (float $n) $maxHeat)) }}"><button type="button" class="stat-heat-cell" data-author="{{ lower $author.name }}" data-name="{{ $author.name }}" data-author-year="{{ . }}" aria-pressed="false" aria-label="{{ $author.name | replaceRE "'" "’" }} · {{ . }}: {{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-value="{{ $n }} book{{ if ne $n 1 }}s{{ end }}" data-tip-label="{{ $author.name | replaceRE "'" "’" }} · {{ . }}" data-tip-detail="{{ $titles | jsonify }}"><span class="visually-hidden">{{ $n }}</span></button></td>{{ else }}<td><span class="visually-hidden">0</span></td>{{ end }}
       {{- end }}</tr>
     {{- end }}
     </tbody>
